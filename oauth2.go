@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bufio"
+	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/oauth2"
@@ -9,32 +12,45 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
 func AccessToken(profileName string) (string, error) {
-	config, _ := LoadConfig()
-	return accessToken(config, profileName)
-}
-
-func accessToken(config map[string]map[string]string, profileName string) (string, error) {
-	currentProfile := config[profileName]
+	currentProfile := CurrentOptions.ProfileDict[profileName]
 	if currentProfile == nil {
 		return "", fmt.Errorf("unknown profile [%s]", profileName)
+	}
+	//	if _, ok := currentProfile[AUTH_SERVER_AUTH_ENDPOINT]; !ok {
+	//		return "", fmt.Errorf("%s is required in profile [%s]", AUTH_SERVER_AUTH_ENDPOINT, profileName)
+	//	}
+	if _, ok := currentProfile[AUTH_SERVER_TOKEN_ENDPOINT]; !ok {
+		return "", fmt.Errorf("%s is required in profile [%s]", AUTH_SERVER_TOKEN_ENDPOINT, profileName)
 	}
 
 	grantType := currentProfile[GRANT_TYPE]
 	if grantType == "" {
 		grantType = DEFAULT_GRANT_TYPE
 	}
-	oauth2Conf := newConf(currentProfile[AUTH_SERVER_ENDPOINT])
+	oauth2Conf := newConf(currentProfile)
 
 	switch grantType {
-	//	case "authorizaton_code":
-	//		tok := oauth2.GetToken(currentProfile)
-	//		return string(tok.AccessToken)
+	case "authorization_code":
+		state := random()
+		url := oauth2Conf.AuthCodeURL(state)
+		fmt.Fprintf(os.Stderr, "Open %s and get code\n", url)
+
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Fprint(os.Stderr, "Enter code: ")
+		if code, err := reader.ReadString('\n'); err != nil {
+			return "", err
+		} else if tok, err := oauth2Conf.Exchange(oauth2.NoContext, trimSuffix(code, "\n")); err != nil {
+			return "", err
+		} else {
+			return tok.AccessToken, nil
+		}
 	case "password":
 		username := currentProfile[USERNAME]
 		password := currentProfile[PASSWORD]
@@ -46,7 +62,7 @@ func accessToken(config map[string]map[string]string, profileName string) (strin
 	case "switch_user":
 		username := currentProfile[USERNAME]
 		sourceProfile := currentProfile[SOURCE_PROFILE]
-		if sourceToken, err := accessToken(config, sourceProfile); err != nil {
+		if sourceToken, err := AccessToken(sourceProfile); err != nil {
 			return "", err
 		} else if tok, err := retrieveToken(oauth2.NoContext, oauth2Conf, switchUserValues(username, sourceToken, oauth2Conf.Scopes)); err != nil {
 			return "", err
@@ -65,17 +81,30 @@ func switchUserValues(username string, sourceToken string, scopes []string) url.
 		"scope":        condVal(strings.Join(scopes, " "))}
 }
 
-func newConf(url string) *oauth2.Config {
+func newConf(profile map[string]string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     DEFAULT_CLIENT_ID,
-		ClientSecret: DEFAULT_CLIENT_SECRET,
-		RedirectURL:  "REDIRECT_URL",
-		Scopes:       []string{"read", "write"},
+		ClientID:     getOrDefault(profile, CLIENT_ID, DEFAULT_CLIENT_ID),
+		ClientSecret: getOrDefault(profile, CLIENT_SECRET, DEFAULT_CLIENT_SECRET),
+		RedirectURL:  profile[REDIRECT],
+		Scopes:       strings.Split(getOrDefault(profile, SCOPES, DEFAULT_SCOPES), ","),
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  url + "/authorize",
-			TokenURL: url + "/token",
+			AuthURL:  profile[AUTH_SERVER_AUTH_ENDPOINT],
+			TokenURL: profile[AUTH_SERVER_TOKEN_ENDPOINT],
 		},
 	}
+}
+
+func random() string {
+	var n uint64
+	binary.Read(rand.Reader, binary.LittleEndian, &n)
+	return strconv.FormatUint(n, 36)
+}
+
+func trimSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
 }
 
 func condVal(v string) []string {
@@ -83,6 +112,23 @@ func condVal(v string) []string {
 		return nil
 	}
 	return []string{v}
+}
+
+func getOrDefault(target map[string]string, key string, defaultValue string) string {
+	if value, ok := target[key]; ok {
+		return value
+	}
+	return defaultValue
+}
+
+func toExpiry(es ...string) time.Time {
+	for _, e := range es {
+		expires, err := strconv.Atoi(e)
+		if err != nil {
+			return time.Now().Add(time.Duration(expires) * time.Second)
+		}
+	}
+	return time.Time{}
 }
 
 func retrieveToken(ctx oauth2.Context, conf *oauth2.Config, values url.Values) (*oauth2.Token, error) {
@@ -119,14 +165,7 @@ func retrieveToken(ctx oauth2.Context, conf *oauth2.Config, values url.Values) (
 			AccessToken:  vals.Get("access_token"),
 			TokenType:    vals.Get("token_type"),
 			RefreshToken: vals.Get("refresh_token"),
-		}
-		e := vals.Get("expires_in")
-		if e == "" {
-			e = vals.Get("expires")
-		}
-		expires, _ := strconv.Atoi(e)
-		if expires != 0 {
-			token.Expiry = time.Now().Add(time.Duration(expires) * time.Second)
+			Expiry:       toExpiry(vals.Get("expires_in"), vals.Get("expires")),
 		}
 	default:
 		var tj tokenJSON
