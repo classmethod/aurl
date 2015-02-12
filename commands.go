@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/classmethod-aws/oauthttp/oauth2"
-	"github.com/classmethod-aws/oauthttp/profile"
 	"github.com/codegangsta/cli"
 	"io/ioutil"
 	"log"
@@ -66,12 +64,6 @@ var commandDelete = cli.Command{
 	Action: doDelete,
 }
 
-func debug(v ...interface{}) {
-	if os.Getenv("DEBUG") != "" {
-		log.Println(v...)
-	}
-}
-
 func assert(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -79,83 +71,97 @@ func assert(err error) {
 }
 
 func doGet(ctx *cli.Context) {
+	loadOptions(ctx)
 	doRequest(ctx, "GET")
 }
 
 func doPost(ctx *cli.Context) {
+	loadOptions(ctx)
 	doRequest(ctx, "POST")
 }
 
 func doPut(ctx *cli.Context) {
+	loadOptions(ctx)
 	doRequest(ctx, "POST")
 }
 
 func doDelete(ctx *cli.Context) {
+	loadOptions(ctx)
 	doRequest(ctx, "DELETE")
 }
 
+func loadOptions(ctx *cli.Context) {
+	var err error
+	CurrentOptions, err = Opts(ctx)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+}
+
 func doRequest(ctx *cli.Context, method string) {
-	apiUrl := getApiUrl(ctx)
-	debug("url = %s", apiUrl)
-	body := strings.NewReader(ctx.GlobalString("data"))
+	Tracef("doRequest start")
+	result, err := doRequest0(ctx, method)
+	Tracef("request done")
+	if result != nil {
+		Tracef("result found")
+		fmt.Println(string(result))
+	} else {
+		Tracef("no result")
+	}
+	if err != nil {
+		Tracef("error found")
+		log.Fatal(err)
+		os.Exit(1)
+	} else {
+		Tracef("no error")
+	}
+	Tracef("doRequest end")
+}
 
-	profileName := ctx.GlobalString("profile")
-	debug("profile = ", profileName)
+func doRequest0(ctx *cli.Context, method string) (result []byte, err error) {
+	Tracef("profileName = %s", CurrentOptions.ProfileName)
 
-	req, _ := http.NewRequest(method, apiUrl, body)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", getAccessToken(ctx)))
-
-	dump, _ := httputil.DumpRequestOut(req, true)
-	debug("request = ", string(dump))
-
+	targetUrl, err := targetUrl(ctx)
+	if err != nil {
+		return nil, err
+	}
+	Tracef("targetUrl = %s", targetUrl)
+	data := ctx.String("data")
+	Tracef("data = %s", data)
+	body := strings.NewReader(data)
+	req, err := http.NewRequest(method, targetUrl, body)
+	if err != nil {
+		return nil, err
+	}
+	at, err := AccessToken(CurrentOptions.ProfileName)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", at))
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		return nil, err
+	}
+	Tracef("request = %s", string(dump))
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-
-	dumpResp, _ := httputil.DumpResponse(resp, true)
-	debug("response = ", string(dumpResp))
-
-	byteArray, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(byteArray))
+	dumpResp, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		log.Printf("%+v%n", err)
+	} else {
+		Tracef("response = %s", string(dumpResp))
+	}
+	return ioutil.ReadAll(resp.Body)
 }
 
-func getAccessToken(ctx *cli.Context) string {
-	profileName := ctx.GlobalString("profile")
-	return getAccessToken0(ctx, profileName)
-}
-
-func getAccessToken0(ctx *cli.Context, profileName string) string {
-	config := profile.ParseConfig()
-	if config[profileName] == nil {
-		log.Fatal(fmt.Sprintf("unknown profile [%s]", profileName))
-		os.Exit(1)
-	}
-
-	gt := config[profileName][profile.GRANT_TYPE]
-	if gt == "" {
-		gt = profile.DEFAULT_GRANT_TYPE
-	}
-	switch gt {
-	case "password":
-		tok := oauth2.GetToken(config[profileName])
-		return string(tok.AccessToken)
-	case "switch_user":
-		sourceProfileName := config[profileName][profile.SOURCE_PROFILE]
-		t := getAccessToken0(ctx, sourceProfileName)
-		tok := oauth2.GetToken2(config[profileName], t)
-		return string(tok.AccessToken)
-	}
-	log.Fatal(fmt.Sprintf("unknown grant_type [%s] in profile [%s]", gt, profileName))
-	os.Exit(1)
-	return ""
-}
-
-func getApiUrl(ctx *cli.Context) string {
+func targetUrl(ctx *cli.Context) (string, error) {
 	if len(ctx.Args()) < 1 {
-		log.Fatal("require URL" + string(len(ctx.Args())))
-		os.Exit(1)
+		return "", fmt.Errorf("target URL required")
 	}
-	return ctx.Args()[0]
+	return ctx.Args()[0], nil
 }

@@ -1,9 +1,7 @@
-package profile
+package main
 
 import (
 	ini "github.com/rakyll/goini"
-	"log"
-	"os"
 	"os/user"
 	"strings"
 )
@@ -24,13 +22,8 @@ const (
 	SOURCE_PROFILE       = "source_profile"
 )
 
-func ParseConfig() ini.Dict {
-	dict, err := ini.Load(configFilePath())
-	if err != nil {
-		log.Fatal("profile: load error:", err)
-		os.Exit(1)
-	}
-	return dict
+func LoadConfig() (map[string]map[string]string, error) {
+	return ini.Load(configFilePath())
 }
 
 func configFilePath() string {
