@@ -18,66 +18,90 @@ import (
 	"time"
 )
 
-func AccessToken(profileName string) (string, error) {
-	currentProfile := CurrentOptions.ProfileDict[profileName]
-	if currentProfile == nil {
-		return "", fmt.Errorf("unknown profile [%s]", profileName)
+func AccessToken(profileName string, retrieve bool) (*oauth2.Token, bool, error) {
+	currentProfile, ok := CurrentOptions.ProfileDict[profileName]
+	if ok == false || currentProfile == nil {
+		return &oauth2.Token{}, false, fmt.Errorf("unknown profile [%s]", profileName)
 	}
-	//	if _, ok := currentProfile[AUTH_SERVER_AUTH_ENDPOINT]; !ok {
-	//		return "", fmt.Errorf("%s is required in profile [%s]", AUTH_SERVER_AUTH_ENDPOINT, profileName)
-	//	}
-	if _, ok := currentProfile[AUTH_SERVER_TOKEN_ENDPOINT]; !ok {
-		return "", fmt.Errorf("%s is required in profile [%s]", AUTH_SERVER_TOKEN_ENDPOINT, profileName)
+
+	oauth2Conf := newConf(currentProfile)
+
+	if !retrieve {
+		Tracef("loading from token store")
+		values, err := LoadValues(profileName)
+		if err == nil {
+			Tracef("loaded: %v", values)
+			t := valuesToToken(values)
+			tok, err := oauth2Conf.TokenSource(oauth2.NoContext, t).Token()
+			if err == nil {
+				return tok, false, nil
+			}
+		} else {
+			Tracef("load error: %v", err)
+		}
+		Tracef("==== phase transition to Retrieve")
 	}
 
 	grantType := currentProfile[GRANT_TYPE]
 	if grantType == "" {
 		grantType = DEFAULT_GRANT_TYPE
 	}
-	oauth2Conf := newConf(currentProfile)
 
 	switch grantType {
 	case "authorization_code":
-		state := random()
-		url := oauth2Conf.AuthCodeURL(state)
-		fmt.Fprintf(os.Stderr, "Open %s and get code\n", url)
-
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Fprint(os.Stderr, "Enter code: ")
-		if code, err := reader.ReadString('\n'); err != nil {
-			return "", err
-		} else if tok, err := oauth2Conf.Exchange(oauth2.NoContext, trimSuffix(code, "\n")); err != nil {
-			return "", err
-		} else {
-			return tok.AccessToken, nil
-		}
+		return authorizationCodeFlow(oauth2Conf)
 	case "password":
-		username := currentProfile[USERNAME]
-		password := currentProfile[PASSWORD]
-		if tok, err := oauth2Conf.PasswordCredentialsToken(oauth2.NoContext, username, password); err != nil {
-			return "", err
-		} else {
-			return tok.AccessToken, nil
-		}
+		return resourceOwnerPasswordFlow(oauth2Conf, currentProfile[USERNAME], currentProfile[PASSWORD])
 	case "switch_user":
-		username := currentProfile[USERNAME]
-		sourceProfile := currentProfile[SOURCE_PROFILE]
-		if sourceToken, err := AccessToken(sourceProfile); err != nil {
-			return "", err
-		} else if tok, err := retrieveToken(oauth2.NoContext, oauth2Conf, switchUserValues(username, sourceToken, oauth2Conf.Scopes)); err != nil {
-			return "", err
-		} else {
-			return tok.AccessToken, nil
-		}
+		return switchUserFlow(oauth2Conf, currentProfile[USERNAME], currentProfile[SOURCE_PROFILE])
 	}
-	return "", fmt.Errorf("unknown grant_type [%s] in profile [%s]", grantType, profileName)
+	return &oauth2.Token{}, true, fmt.Errorf("unsupported grant_type [%s] in profile [%s]", grantType, profileName)
 }
 
-func switchUserValues(username string, sourceToken string, scopes []string) url.Values {
+func authorizationCodeFlow(oauth2Conf *oauth2.Config) (*oauth2.Token, bool, error) {
+	state := random()
+	url := oauth2Conf.AuthCodeURL(state)
+	fmt.Fprintf(os.Stderr, "Open %s and get code\n", url)
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Fprint(os.Stderr, "Enter code: ")
+	if code, err := reader.ReadString('\n'); err != nil {
+		return &oauth2.Token{}, true, err
+	} else if tok, err := oauth2Conf.Exchange(oauth2.NoContext, trimSuffix(code, "\n")); err != nil {
+		return &oauth2.Token{}, true, err
+	} else {
+		return tok, true, nil
+	}
+}
+
+func resourceOwnerPasswordFlow(oauth2Conf *oauth2.Config, username string, password string) (*oauth2.Token, bool, error) {
+	if tok, err := oauth2Conf.PasswordCredentialsToken(oauth2.NoContext, username, password); err != nil {
+		return &oauth2.Token{}, true, err
+	} else {
+		return tok, true, nil
+	}
+}
+
+func switchUserFlow(oauth2Conf *oauth2.Config, username string, sourceProfile string) (*oauth2.Token, bool, error) {
+	sourceToken, _, err := AccessToken(sourceProfile, false)
+	if err != nil {
+		return &oauth2.Token{}, true, err
+	}
+
+	values := switchUserValues(username, sourceToken, oauth2Conf.Scopes)
+	tok, err := retrieveToken(oauth2.NoContext, oauth2Conf, values)
+	if err != nil {
+		return &oauth2.Token{}, true, err
+	} else {
+		return tok, true, nil
+	}
+}
+
+func switchUserValues(username string, sourceToken *oauth2.Token, scopes []string) url.Values {
 	return url.Values{
 		"grant_type":   {"switch_user"},
 		"username":     {username},
-		"access_token": {sourceToken},
+		"access_token": {sourceToken.AccessToken},
 		"scope":        condVal(strings.Join(scopes, " "))}
 }
 
@@ -119,6 +143,25 @@ func getOrDefault(target map[string]string, key string, defaultValue string) str
 		return value
 	}
 	return defaultValue
+}
+
+func tokenToValues(tok *oauth2.Token) map[string]string {
+	values := make(map[string]string)
+	values[ACCESS_TOKEN] = tok.AccessToken
+	values[TOKEN_TYPE] = tok.TokenType
+	values[REFRESH_TOKEN] = tok.RefreshToken
+	values[EXPIRY] = strconv.FormatInt(tok.Expiry.Unix(), 10)
+	return values
+}
+
+func valuesToToken(values map[string]string) *oauth2.Token {
+	exp, _ := strconv.ParseInt(values[EXPIRY], 10, 64)
+	return &oauth2.Token{
+		AccessToken:  values[ACCESS_TOKEN],
+		TokenType:    values[TOKEN_TYPE],
+		RefreshToken: values[REFRESH_TOKEN],
+		Expiry:       time.Unix(exp, 0),
+	}
 }
 
 func toExpiry(es ...string) time.Time {

@@ -2,8 +2,6 @@ package main
 
 import (
 	ini "github.com/rakyll/goini"
-	"os/user"
-	"strings"
 )
 
 const (
@@ -27,20 +25,5 @@ const (
 )
 
 func LoadConfig() (map[string]map[string]string, error) {
-	return ini.Load(configFilePath())
-}
-
-func configFilePath() string {
-	path := DEFAULT_CONFIG_FILE
-	usr, _ := user.Current()
-	var dir string = usr.HomeDir
-	if last := len(dir) - 1; last >= 0 && dir[last] != '/' {
-		dir = dir + "/"
-	}
-	// Check in case of paths like "/something/~/something/"
-	if path[:2] == "~/" {
-		path = strings.Replace(path, "~/", dir, 1)
-	}
-	//	log.Printf("path = %s", path)
-	return path
+	return ini.Load(expandPath(DEFAULT_CONFIG_FILE))
 }

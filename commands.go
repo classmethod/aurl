@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
+	"golang.org/x/oauth2"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -101,30 +102,31 @@ func loadOptions(ctx *cli.Context) {
 
 func doRequest(ctx *cli.Context, method string) {
 	Tracef("doRequest start")
-	result, err := doRequest0(ctx, method)
-	Tracef("request done")
+	result, tok, err := doRequest0(ctx, method)
+	if err != nil {
+		Tracef("error found on request")
+		log.Fatal(err)
+	} else {
+		Tracef("request done successfully")
+		if tok != nil {
+			storeToken(tok)
+		}
+	}
 	if result != nil {
 		Tracef("result found")
 		fmt.Println(string(result))
 	} else {
 		Tracef("no result")
 	}
-	if err != nil {
-		Tracef("error found")
-		log.Fatal(err)
-		os.Exit(1)
-	} else {
-		Tracef("no error")
-	}
 	Tracef("doRequest end")
 }
 
-func doRequest0(ctx *cli.Context, method string) (result []byte, err error) {
+func doRequest0(ctx *cli.Context, method string) ([]byte, *oauth2.Token, error) {
 	Tracef("profileName = %s", CurrentOptions.ProfileName)
 
 	targetUrl, err := targetUrl(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	Tracef("targetUrl = %s", targetUrl)
 	data := ctx.String("data")
@@ -132,31 +134,63 @@ func doRequest0(ctx *cli.Context, method string) (result []byte, err error) {
 	body := strings.NewReader(data)
 	req, err := http.NewRequest(method, targetUrl, body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	at, err := AccessToken(CurrentOptions.ProfileName)
-	if err != nil {
-		return nil, err
+
+	var lastError error
+	for retrieve := false; retrieve == false; retrieve = true {
+		Tracef("=== phase %s start", toString(retrieve))
+		tok, r, err := AccessToken(CurrentOptions.ProfileName, retrieve)
+		if err != nil {
+			Tracef("phase %s failed (a)", toString(retrieve))
+			lastError = err
+			continue
+		}
+		retrieve = r
+		req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+		dump, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			Tracef("phase %s failed (b)", toString(retrieve))
+			lastError = err
+			continue
+		}
+		Tracef("request = %s", string(dump))
+
+		client := new(http.Client)
+		resp, err := client.Do(req)
+		if err != nil {
+			Tracef("phase %s failed (c)", toString(retrieve))
+			lastError = err
+			continue
+		}
+
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			log.Printf("%+v%n", err)
+		} else {
+			Tracef("response = %s", string(dumpResp))
+		}
+
+		Tracef("phase %s", toString(retrieve))
+		if resp.StatusCode >= 400 && resp.StatusCode < 500 && retrieve {
+			Tracef("phase %s failed (d)", toString(retrieve))
+			lastError = err
+			break
+		}
+
+		Tracef("read body %s", toString(retrieve))
+		body, err := ioutil.ReadAll(resp.Body)
+		return body, tok, err
 	}
-	req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", at))
-	dump, err := httputil.DumpRequestOut(req, true)
-	if err != nil {
-		return nil, err
+	return nil, nil, fmt.Errorf("%v", lastError)
+}
+
+func toString(retrieve bool) string {
+	if retrieve {
+		return "retrieve"
 	}
-	Tracef("request = %s", string(dump))
-	client := new(http.Client)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	dumpResp, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		log.Printf("%+v%n", err)
-	} else {
-		Tracef("response = %s", string(dumpResp))
-	}
-	return ioutil.ReadAll(resp.Body)
+	return "sotred"
 }
 
 func targetUrl(ctx *cli.Context) (string, error) {
@@ -164,4 +198,12 @@ func targetUrl(ctx *cli.Context) (string, error) {
 		return "", fmt.Errorf("target URL required")
 	}
 	return ctx.Args()[0], nil
+}
+
+func storeToken(tok *oauth2.Token) {
+	if SaveValues(CurrentOptions.ProfileName, tokenToValues(tok)) {
+		Tracef("token stored [%s]", CurrentOptions.ProfileName)
+	} else {
+		Tracef("fail to store token [%s]", CurrentOptions.ProfileName)
+	}
 }
