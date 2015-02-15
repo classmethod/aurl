@@ -24,6 +24,10 @@ var Commands = []cli.Command{
 	commandPost,
 	commandPut,
 	commandDelete,
+	commandHead,
+	commandOptions,
+	commandPatch,
+	commandTrace,
 }
 
 var commandGet = cli.Command{
@@ -31,6 +35,7 @@ var commandGet = cli.Command{
 	ShortName: "g",
 	Usage:     "Make GET request",
 	Description: `
+The GET method means retrieve whatever information (in the form of an entity) is identified by the Request-URI.
 `,
 	Flags:  DefaultFlags,
 	Action: doGet,
@@ -41,6 +46,8 @@ var commandPost = cli.Command{
 	ShortName: "p",
 	Usage:     "Make POST request",
 	Description: `
+The POST method is used to request that the origin server accept the entity enclosed in the request
+as a new subordinate of the resource identified by the Request-URI in the Request-Line.
 `,
 	Flags:  DefaultFlags,
 	Action: doPost,
@@ -50,6 +57,7 @@ var commandPut = cli.Command{
 	Name:  "put",
 	Usage: "Make PUT request",
 	Description: `
+The PUT method requests that the enclosed entity be stored under the supplied Request-URI.
 `,
 	Flags:  DefaultFlags,
 	Action: doPut,
@@ -60,9 +68,55 @@ var commandDelete = cli.Command{
 	ShortName: "d",
 	Usage:     "Make DELETE request",
 	Description: `
+The DELETE method requests that the origin server delete the resource identified by the Request-URI.
 `,
 	Flags:  DefaultFlags,
 	Action: doDelete,
+}
+
+var commandHead = cli.Command{
+	Name:      "head",
+	ShortName: "h",
+	Usage:     "Make HEAD request",
+	Description: `
+The HEAD method is identical to GET except that the server MUST NOT return a message-body in the response.
+`,
+	Flags:  DefaultFlags,
+	Action: doHead,
+}
+
+var commandOptions = cli.Command{
+	Name:      "options",
+	ShortName: "o",
+	Usage:     "Make OPTIONS request",
+	Description: `
+The OPTIONS method represents a request for information about the communication options available
+on the request/response chain identified by the Request-URI.
+`,
+	Flags:  DefaultFlags,
+	Action: doOptions,
+}
+
+var commandPatch = cli.Command{
+	Name:  "patch",
+	Usage: "Make PATCH request",
+	Description: `
+The PATCH method requests that a set of changes described in the request entity be applied
+to the resource identified by the Request-URI.
+`,
+	Flags:  DefaultFlags,
+	Action: doPatch,
+}
+
+var commandTrace = cli.Command{
+	Name:      "trace",
+	ShortName: "t",
+	Usage:     "Make TRACE request",
+	Description: `
+The TRACE method is used to invoke a remote, application-layer loop-back of the request message.
+`,
+	Flags:  DefaultFlags,
+	Action: doTrace,
 }
 
 func assert(err error) {
@@ -89,6 +143,26 @@ func doPut(ctx *cli.Context) {
 func doDelete(ctx *cli.Context) {
 	loadOptions(ctx)
 	doRequest(ctx, "DELETE")
+}
+
+func doHead(ctx *cli.Context) {
+	loadOptions(ctx)
+	doRequest(ctx, "HEAD")
+}
+
+func doOptions(ctx *cli.Context) {
+	loadOptions(ctx)
+	doRequest(ctx, "OPTIONS")
+}
+
+func doPatch(ctx *cli.Context) {
+	loadOptions(ctx)
+	doRequest(ctx, "PATCH")
+}
+
+func doTrace(ctx *cli.Context) {
+	loadOptions(ctx)
+	doRequest(ctx, "TRACE")
 }
 
 func loadOptions(ctx *cli.Context) {
