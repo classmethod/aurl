@@ -179,6 +179,7 @@ func doRequest(ctx *cli.Context, method string) {
 	resp, tok, err := doRequest0(ctx, method)
 	if err != nil {
 		Tracef("error found on request: %v", err)
+		return
 	} else {
 		Tracef("request done successfully")
 		if tok != nil {
