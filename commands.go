@@ -176,26 +176,50 @@ func loadOptions(ctx *cli.Context) {
 
 func doRequest(ctx *cli.Context, method string) {
 	Tracef("doRequest start")
-	result, tok, err := doRequest0(ctx, method)
+	resp, tok, err := doRequest0(ctx, method)
 	if err != nil {
-		Tracef("error found on request")
-		log.Fatal(err)
+		Tracef("error found on request: %v", err)
 	} else {
 		Tracef("request done successfully")
 		if tok != nil {
 			storeToken(tok)
 		}
 	}
-	if result != nil {
-		Tracef("result found")
-		fmt.Println(string(result))
+
+	Tracef("printing headers")
+	for _, header := range strings.Split(ctx.GlobalString("print-header"), ",") {
+		for _, value := range resp.Header[header] {
+			fmt.Printf("%s: %s\n", header, string(value))
+		}
+	}
+
+	if ctx.GlobalBool("no-body") {
+		Tracef("printing body is disabled")
 	} else {
-		Tracef("no result")
+		Tracef("printing body")
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			Tracef("error on read: %v", err)
+		} else if body == nil {
+			Tracef("no body")
+		} else {
+			Tracef("body found")
+			fmt.Println(string(body))
+		}
 	}
 	Tracef("doRequest end")
 }
 
-func doRequest0(ctx *cli.Context, method string) ([]byte, *oauth2.Token, error) {
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func doRequest0(ctx *cli.Context, method string) (*http.Response, *oauth2.Token, error) {
 	Tracef("profileName = %s", CurrentOptions.ProfileName)
 
 	targetUrl, err := targetUrl(ctx)
@@ -261,10 +285,7 @@ func doRequest0(ctx *cli.Context, method string) ([]byte, *oauth2.Token, error) 
 				Tracef("phase stored failed (4XX response) -> final result")
 			}
 		}
-
-		Tracef("read body %s", toString(retrieve))
-		body, err := ioutil.ReadAll(resp.Body)
-		return body, tok, err
+		return resp, tok, err
 	}
 	return nil, nil, fmt.Errorf("%v", lastError)
 }

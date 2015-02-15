@@ -44,6 +44,14 @@ func main() {
 			EnvVar: "OAUTHTTP_PROFILE",
 		},
 		cli.BoolFlag{
+			Name:  "no-body, B",
+			Usage: "Disable the body printing to stdout",
+		},
+		cli.StringFlag{
+			Name:  "print-header, H",
+			Usage: "Enable the response header printing to stdout",
+		},
+		cli.BoolFlag{
 			Name:  "verbose, V",
 			Usage: "Run in Verbose mode (logs to stderr)",
 		},
