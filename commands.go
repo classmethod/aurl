@@ -142,7 +142,7 @@ func doRequest0(ctx *cli.Context, method string) ([]byte, *oauth2.Token, error) 
 		Tracef("=== phase %s start", toString(retrieve))
 		tok, r, err := AccessToken(CurrentOptions.ProfileName, retrieve)
 		if err != nil {
-			Tracef("phase %s failed (a)", toString(retrieve))
+			Tracef("phase %s failed (token retrieving failed)", toString(retrieve))
 			lastError = err
 			continue
 		}
@@ -151,16 +151,21 @@ func doRequest0(ctx *cli.Context, method string) ([]byte, *oauth2.Token, error) 
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
 		dump, err := httputil.DumpRequestOut(req, true)
 		if err != nil {
-			Tracef("phase %s failed (b)", toString(retrieve))
+			Tracef("phase %s failed (request dump failed)", toString(retrieve))
 			lastError = err
 			continue
 		}
 		Tracef("request = %s", string(dump))
 
-		client := new(http.Client)
+		client := &http.Client{CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			Tracef("redirect to %s", req.URL.String())
+			req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+			return nil
+		}}
 		resp, err := client.Do(req)
 		if err != nil {
-			Tracef("phase %s failed (c)", toString(retrieve))
+			Tracef("phase %s failed (request failed)", toString(retrieve))
 			lastError = err
 			continue
 		}
@@ -173,10 +178,14 @@ func doRequest0(ctx *cli.Context, method string) ([]byte, *oauth2.Token, error) 
 		}
 
 		Tracef("phase %s", toString(retrieve))
-		if resp.StatusCode >= 400 && resp.StatusCode < 500 && retrieve {
-			Tracef("phase %s failed (d)", toString(retrieve))
-			lastError = err
-			break
+		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+			if retrieve {
+				Tracef("phase retrieve failed (4XX response)")
+				lastError = err
+				break
+			} else {
+				Tracef("phase stored failed (4XX response) -> final result")
+			}
 		}
 
 		Tracef("read body %s", toString(retrieve))
