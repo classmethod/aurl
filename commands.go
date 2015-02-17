@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"golang.org/x/oauth2"
@@ -175,10 +176,17 @@ func loadOptions(ctx *cli.Context) {
 }
 
 func doRequest(ctx *cli.Context, method string) {
+	var tr = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: ctx.GlobalBool("insecure"),
+		},
+	}
+	http.DefaultClient = &http.Client{Transport: tr}
+
 	Tracef("doRequest start")
 	resp, tok, err := doRequest0(ctx, method)
 	if err != nil {
-		Tracef("error found on request: %v", err)
+		log.Fatal(err)
 		return
 	} else {
 		Tracef("request done successfully")
@@ -256,12 +264,20 @@ func doRequest0(ctx *cli.Context, method string) (*http.Response, *oauth2.Token,
 		}
 		Tracef("request = %s", string(dump))
 
-		client := &http.Client{CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			Tracef("redirect to %s", req.URL.String())
-			req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
-			return nil
-		}}
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: ctx.GlobalBool("insecure"),
+			},
+		}
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				Tracef("redirect to %s", req.URL.String())
+				req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+				return nil
+			},
+			Transport: tr,
+		}
 		resp, err := client.Do(req)
 		if err != nil {
 			Tracef("phase %s failed (request failed)", toString(retrieve))
