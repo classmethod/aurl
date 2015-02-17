@@ -311,7 +311,7 @@ func toString(retrieve bool) string {
 	if retrieve {
 		return "retrieve"
 	}
-	return "sotred"
+	return "stored"
 }
 
 func targetUrl(ctx *cli.Context) (string, error) {
