@@ -98,7 +98,7 @@ $ aurl --no-body --print-headers options http://api.example.com/path/to/resource
 
 ## Contribution
 
-1. Fork ([https://github.com/classmethod-aws/oauthttp/fork](https://github.com/classmethod-aws/aurl/fork))
+1. Fork ([https://github.com/classmethod-aws/aurl/fork](https://github.com/classmethod-aws/aurl/fork))
 1. Create a feature branch named like `feature/something_awesome_feature` from `development` branch
 1. Commit your changes
 1. Rebase your local changes against the `develop` branch
