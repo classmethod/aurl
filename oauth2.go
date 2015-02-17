@@ -37,7 +37,7 @@ func AccessToken(profileName string, retrieve bool) (*oauth2.Token, bool, error)
 				return tok, false, nil
 			}
 		} else {
-			Tracef("load error: %v", err)
+			Tracef("cannot found token store: %v", err)
 		}
 		Tracef("==== phase transition to Retrieve")
 	}
