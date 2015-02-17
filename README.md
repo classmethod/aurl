@@ -38,6 +38,9 @@ grant_type = password
 auth_server_token_endpoint = https://api.example.com/oauth/token
 username = john
 password = pass1234
+client_id = foobar
+client_secret = bazqux
+scopes = read,write,global
 ```
 
 ### Token store file
