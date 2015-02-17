@@ -4,7 +4,7 @@ import (
 	"github.com/grategames/ini"
 )
 
-const DEFAULT_STORAGE = "~/.oauthttp/tokens"
+const DEFAULT_STORAGE = "~/.aurl/tokens"
 
 const (
 	ACCESS_TOKEN  = "access_token"

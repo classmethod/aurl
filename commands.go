@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"golang.org/x/oauth2"
@@ -196,10 +197,9 @@ func doRequest(ctx *cli.Context, method string) {
 	}
 
 	Tracef("printing headers")
-	for _, header := range strings.Split(ctx.GlobalString("print-header"), ",") {
-		for _, value := range resp.Header[header] {
-			fmt.Printf("%s: %s\n", header, string(value))
-		}
+	if ctx.GlobalBool("print-headers") {
+		headers, _ := json.Marshal(resp.Header)
+		fmt.Println(string(headers))
 	}
 
 	if ctx.GlobalBool("no-body") {

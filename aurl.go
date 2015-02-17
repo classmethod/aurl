@@ -31,7 +31,7 @@ func Opts(c *cli.Context) (Options, error) {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "oauthttp"
+	app.Name = "aurl"
 	app.Version = Version
 	app.Usage = "HTTP CLI client with OAuth2 authentication"
 	app.Author = "Daisuke Miyamoto"
@@ -52,8 +52,8 @@ func main() {
 			Name:  "no-body, B",
 			Usage: "Disable the body printing to stdout",
 		},
-		cli.StringFlag{
-			Name:  "print-header, H",
+		cli.BoolFlag{
+			Name:  "print-headers, H",
 			Usage: "Enable the response header printing to stdout (comma separated names)",
 		},
 		cli.BoolFlag{

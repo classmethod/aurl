@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DEFAULT_CONFIG_FILE = "~/.oauthttp/profiles"
+	DEFAULT_CONFIG_FILE = "~/.aurl/profiles"
 
 	CLIENT_ID                  = "client_id"
 	CLIENT_SECRET              = "client_secret"
