@@ -13,7 +13,12 @@ aurl is auto processing OAuth dance and manage access/refresh tokens.
 
 ## Install
 
-To install, use `go get`:
+To install, use `homebrew` or `go get`:
+
+```bash
+$ brew tap classmethod-aws/cm
+$ brew install aurl
+```
 
 ```bash
 $ go get -d github.com/classmethod-aws/aurl
