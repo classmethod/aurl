@@ -50,6 +50,8 @@ func AccessToken(profileName string, retrieve bool) (*oauth2.Token, bool, error)
 	switch grantType {
 	case "authorization_code":
 		return authorizationCodeFlow(oauth2Conf)
+	case "implicit":
+		return implicitFlow(oauth2Conf)
 	case "password":
 		return resourceOwnerPasswordFlow(oauth2Conf, currentProfile[USERNAME], currentProfile[PASSWORD])
 	case "switch_user":
@@ -72,6 +74,11 @@ func authorizationCodeFlow(oauth2Conf *oauth2.Config) (*oauth2.Token, bool, erro
 	} else {
 		return tok, true, nil
 	}
+}
+
+func implicitFlow(oauth2Conf *oauth2.Config) (*oauth2.Token, bool, error) {
+	return &oauth2.Token{}, true, fmt.Errorf("implicit flow is not supported")
+	// TODO
 }
 
 func resourceOwnerPasswordFlow(oauth2Conf *oauth2.Config, username string, password string) (*oauth2.Token, bool, error) {
