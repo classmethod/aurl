@@ -186,14 +186,14 @@ func doRequest(ctx *cli.Context, method string) {
 
 	Tracef("doRequest start")
 	resp, tok, err := doRequest0(ctx, method)
+	if tok != nil && resp != nil && resp.StatusCode != 401 && resp.StatusCode != 403 {
+		storeToken(tok)
+	}
 	if err != nil {
 		log.Fatal(err)
 		return
 	} else {
 		Tracef("request done successfully")
-		if tok != nil {
-			storeToken(tok)
-		}
 	}
 
 	Tracef("printing headers")
