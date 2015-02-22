@@ -3,13 +3,13 @@ aurl
 
 ## Description
 
-HTTP CLI client with OAuth2 authentication
+HTTP CLI client with OAuth 2.0 authentication.
 
-curl is powerful command line tool and you can make any complex HTTP request to every servers.  But the target web
-server is secured by OAuth2, you must request another HTTP request to the authorization server before making
-principal request.  And more, you should to manage issued access tokens for every resources.
+You know `curl` is powerful command line tool and you can make any complex HTTP request to every servers.  But the target web server is secured by OAuth 2.0, you must send another HTTP request to the authorization server before making principal request.  And more, you should to manage issued access tokens for every resources.
 
-aurl is auto processing OAuth dance and manage access/refresh tokens.
+`aurl` is a command-line tool that process OAuth 2.0 dance and manage access/refresh tokens automatically.
+
+**Note:** Currently, `aurl` is not support OAuth 1.0a.  Your pull-request is appreciated.
 
 ## Install
 
@@ -28,7 +28,7 @@ $ go get -d github.com/classmethod-aws/aurl
 
 ### Profile configuration
 
-First, you MUST create profile setting file `~/.aurl/profiles` file which format is described below.
+First, you must create profile setting file `~/.aurl/profiles` file which format is described below.
 Profile setting file format is typically called [INI file](http://en.wikipedia.org/wiki/INI_file).
 Each section name is used as profile name.
 
@@ -88,7 +88,7 @@ scopes = https://www.googleapis.com/auth/plus.login https://www.googleapis.com/a
 
 Token store file `~/.aurl/tokens` is used by acurl internally.  Retrieved access/refresh token is stored in this file.
 You SHOULD NOT edit this file manually because this file is overwritten every time curl is executed.
-You MAY lose comment and another extra data.
+You may lose comment and another extra data.
 
 Just for information, token sotore file example is following:
 
@@ -119,7 +119,7 @@ token_type =
 $ aurl [global options] command [command options] [arguments...]
 ```
 
-`command` is every http method (e.g. `get`, `post`, `delete`) and first argument is target url.
+`command` is every http method (e.g. `get`, `post`, `delete`) and first argument is target url.  You can see all `command` in the help message.  Try, `aurl -h`.
 
 ###### EXAMPLE
 
