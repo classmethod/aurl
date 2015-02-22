@@ -18,8 +18,8 @@ const (
 	PASSWORD                   = "password"
 	SOURCE_PROFILE             = "source_profile"
 
-	DEFAULT_CLIENT_ID     = "oauthttp"
-	DEFAULT_CLIENT_SECRET = "oauthttp"
+	DEFAULT_CLIENT_ID     = "aurl"
+	DEFAULT_CLIENT_SECRET = "aurl"
 	DEFAULT_GRANT_TYPE    = "authorization_code"
 	DEFAULT_SCOPES        = "read,write"
 )
