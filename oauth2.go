@@ -67,9 +67,9 @@ func authorizationCodeFlow(oauth2Conf *oauth2.Config) (*oauth2.Token, bool, erro
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Fprint(os.Stderr, "Enter code: ")
-	if code, err := reader.ReadString('\n'); err != nil {
+	if code, _, err := reader.ReadLine(); err != nil {
 		return &oauth2.Token{}, true, err
-	} else if tok, err := oauth2Conf.Exchange(oauth2.NoContext, trimSuffix(code, "\n")); err != nil {
+	} else if tok, err := oauth2Conf.Exchange(oauth2.NoContext, string(code)); err != nil {
 		return &oauth2.Token{}, true, err
 	} else {
 		return tok, true, nil
@@ -129,13 +129,6 @@ func random() string {
 	var n uint64
 	binary.Read(rand.Reader, binary.LittleEndian, &n)
 	return strconv.FormatUint(n, 36)
-}
-
-func trimSuffix(s, suffix string) string {
-	if strings.HasSuffix(s, suffix) {
-		s = s[:len(s)-len(suffix)]
-	}
-	return s
 }
 
 func condVal(v string) []string {
