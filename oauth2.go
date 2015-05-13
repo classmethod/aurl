@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"io"
 	"io/ioutil"
@@ -174,7 +175,7 @@ func toExpiry(es ...string) time.Time {
 	return time.Time{}
 }
 
-func retrieveToken(ctx oauth2.Context, conf *oauth2.Config, values url.Values) (*oauth2.Token, error) {
+func retrieveToken(ctx context.Context, conf *oauth2.Config, values url.Values) (*oauth2.Token, error) {
 	values.Set("client_id", conf.ClientID)
 	req, err := http.NewRequest("POST", conf.Endpoint.TokenURL, strings.NewReader(values.Encode()))
 	if err != nil {

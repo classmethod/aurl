@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -254,8 +255,18 @@ func doRequest0(ctx *cli.Context, method string) (*http.Response, *oauth2.Token,
 			continue
 		}
 		retrieve = r
+
 		req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+		for _, element := range ctx.GlobalStringSlice("header") {
+			s := regexp.MustCompile(":").Split(element, 2)
+			headerKey := strings.TrimSpace(s[0])
+			headerValue := strings.TrimSpace(s[1])
+			req.Header.Set(headerKey, headerValue)
+			Tracef("custom header [%s: %s]", headerKey, headerValue)
+		}
+		Tracef("header end")
+
 		dump, err := httputil.DumpRequestOut(req, true)
 		if err != nil {
 			Tracef("phase %s failed (request dump failed)", toString(retrieve))
@@ -274,6 +285,10 @@ func doRequest0(ctx *cli.Context, method string) (*http.Response, *oauth2.Token,
 				Tracef("redirect to %s", req.URL.String())
 				req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+				for _, element := range ctx.StringSlice("header") {
+					s := regexp.MustCompile(":").Split(element, 2)
+					req.Header.Set(strings.TrimSpace(s[0]), strings.TrimSpace(s[1]))
+				}
 				return nil
 			},
 			Transport: tr,
