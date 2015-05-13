@@ -43,7 +43,11 @@ func main() {
 			Usage:  "profile name",
 			EnvVar: "OAUTHTTP_PROFILE",
 		},
-
+		cli.StringSliceFlag{
+			Name:  "header, H",
+			Value: &cli.StringSlice{},
+			Usage: "Set http header. (e.g. \"Content-Type: application/json\")",
+		},
 		cli.BoolFlag{
 			Name:  "insecure, k",
 			Usage: "Disable SSL certificate verification",
@@ -53,7 +57,7 @@ func main() {
 			Usage: "Disable the body printing to stdout",
 		},
 		cli.BoolFlag{
-			Name:  "print-headers, H",
+			Name:  "print-headers",
 			Usage: "Enable the response header printing to stdout (comma separated names)",
 		},
 		cli.BoolFlag{
