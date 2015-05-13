@@ -1,13 +1,13 @@
 package main
 
 import (
-	"os/user"
+	"github.com/mitchellh/go-homedir"
 	"strings"
 )
 
 func expandPath(path string) string {
-	usr, _ := user.Current()
-	var dir string = usr.HomeDir
+	usr, _ := homedir.Dir()
+	var dir string = usr
 	if last := len(dir) - 1; last >= 0 && dir[last] != '/' {
 		dir = dir + "/"
 	}
