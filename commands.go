@@ -140,7 +140,7 @@ func doPost(ctx *cli.Context) {
 
 func doPut(ctx *cli.Context) {
 	loadOptions(ctx)
-	doRequest(ctx, "POST")
+	doRequest(ctx, "PUT")
 }
 
 func doDelete(ctx *cli.Context) {
