@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -281,13 +282,16 @@ func doRequest0(ctx *cli.Context, method string) (*http.Response, *oauth2.Token,
 			},
 		}
 		client := &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				Tracef("redirect to %s", req.URL.String())
-				req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
-				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+			CheckRedirect: func(redirectRequest *http.Request, via []*http.Request) error {
+				Tracef("redirect to %s", redirectRequest.URL.String())
+				Tracef("original request Host = %s", req.URL.String())
+				if matchServer(redirectRequest.URL, req.URL) {
+					redirectRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok.AccessToken))
+				}
+				redirectRequest.Header.Set("User-Agent", fmt.Sprintf("%s-%s", ctx.App.Name, Version))
 				for _, element := range ctx.StringSlice("header") {
 					s := regexp.MustCompile(":").Split(element, 2)
-					req.Header.Set(strings.TrimSpace(s[0]), strings.TrimSpace(s[1]))
+					redirectRequest.Header.Set(strings.TrimSpace(s[0]), strings.TrimSpace(s[1]))
 				}
 				return nil
 			},
@@ -320,6 +324,16 @@ func doRequest0(ctx *cli.Context, method string) (*http.Response, *oauth2.Token,
 		return resp, tok, err
 	}
 	return nil, nil, fmt.Errorf("%v", lastError)
+}
+
+func matchServer(a *url.URL, b *url.URL) bool {
+	if a.Scheme != b.Scheme {
+		return false
+	}
+	if a.Host != b.Host {
+		return false
+	}
+	return true
 }
 
 func toString(retrieve bool) string {
