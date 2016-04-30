@@ -16,12 +16,12 @@ You know `curl` is powerful command line tool and you can make any complex HTTP 
 To install, use `homebrew` or `go get`:
 
 ```bash
-$ brew tap classmethod-aws/cm
+$ brew tap classmethod/repos
 $ brew install aurl
 ```
 
 ```bash
-$ go get -d github.com/classmethod-aws/aurl
+$ go get -d github.com/classmethod/aurl
 ```
 
 ## Usage
@@ -38,7 +38,7 @@ Section name is utilized as profile name.  In each section following key setting
 
 | key name                      | description                       | default value | available values | mandatory                       |
 | ----------------------------- | --------------------------------- |:-------------:|:----------------:|:-------------------------------:|
-| grant\_type | OAuth2 grant type (implicit flow is not supported currently) | authorization_code | authorization_code, password | no |
+| grant\_type                   | OAuth2 grant type                 | authorization_code | authorization_code, password, client_credentials | no |
 | client\_id                    | client id                         | aurl          | (any)            | no                              |
 | client_secret                 | client secret                     | aurl          | (any)            | no                              |
 | auth\_server\_auth\_endpoint  | OAuth2 authorization endpoint URI | (none)        | (any)            | YES (except for password grant) |
@@ -48,6 +48,8 @@ Section name is utilized as profile name.  In each section following key setting
 | username                      | username for password grant       | (none)        | (any)            | no (except for password grant)  |
 | password                      | password for password grant       | (none)        | (any)            | no (except for password grant)  |
 
+
+Implicit flow is not supported currently.
 
 ###### EXAMPLE
 
@@ -86,47 +88,41 @@ scopes = https://www.googleapis.com/auth/plus.login https://www.googleapis.com/a
 
 ### Token store file
 
-Token store file `~/.aurl/tokens` is used by acurl internally.  Retrieved access/refresh token is stored in this file.
-You SHOULD NOT edit this file manually because this file is overwritten every time curl is executed.
+Token store file `~/.aurl/token/*.json` is used by aurl internally.  Retrieved token response body is stored in this file.
+You SHOULD NOT edit this file manually because this file is overwritten at any time curl is executed.
 You may lose comment and another extra data.
 
-Just for information, token sotore file example is following:
-
-```
-[default]
-expiry = 1424049169
-access_token = xxxx
-token_type = bearer
-refresh_token = yyyy
-
-[foobar]
-expiry = 1424141030
-access_token = zzzz
-token_type = bearer
-
-[fb]
-refresh_token = 
-expiry = 1429580553
-access_token = blahblah
-token_type = 
-```
 
 ### Execution
 
 ###### SYNOPSIS
 
 ```bash
-$ aurl [global options] command [command options] [arguments...]
-```
+usage: aurl [<flags>] <url>
 
-`command` is every http method (e.g. `get`, `post`, `delete`) and first argument is target url.  You can see all `command` in the help message.  Try, `aurl -h`.
+Command line utility to make HTTP request with OAuth2.
+
+Flags:
+      --help                     Show context-sensitive help (also try --help-long and --help-man).
+  -p, --profile="default"        Set profile name. (default: "default")
+  -X, --request="GET"            Set HTTP request method. (default: "GET")
+  -H, --header=HEADER:VALUE ...  Add HTTP headers to the request.
+  -d, --data=DATA                Set HTTP request body.
+  -k, --insecure                 Disable SSL certificate verification.
+      --print-body               Enable printing response body to stdout. (default: enabled, try --no-print-body)
+      --print-headers            Enable printing response headers JSON to stdout. (default: disabled, try --no-print-headers)
+  -V, --verbose                  Enable verbose logging to stderr.
+      --version                  Show application version.
+
+Args:
+  <url>  The URL to request```
 
 ###### EXAMPLE
 
 ```bash
-$ aurl get http://api.example.com/path/to/resource
+$ aurl http://api.example.com/path/to/resource
 ...http.response.body...
-$ aurl post http://api.example.com/path/to/resource --data "foobar"
+$ aurl -X POST http://api.example.com/path/to/resource --data "foobar"
 ...http.response.body...
 ```
 
@@ -134,9 +130,9 @@ aurl make request with access token in `Authorization` header of `default` profi
 You can specify profile name with `--profile` option.
 
 ```bash
-$ aurl --profile fb get https://graph.facebook.com/me
+$ aurl --profile fb https://graph.facebook.com/me
 {"id":"...","email": ... }
-$ aurl --profile google get https://www.googleapis.com/plus/v1/people/me
+$ aurl --profile google https://www.googleapis.com/plus/v1/people/me
 {
  "kind": "plus#person",
 ...
@@ -144,16 +140,16 @@ $ aurl --profile google get https://www.googleapis.com/plus/v1/people/me
 ```
 
 By default aurl prints response body in stdout.  When an error occured the detail is printed in stderr.
-You may want not response body but response header, then you can use `--no-body` and `--print-headers` option.
+You may want not response body but response header, then you can use `--no-print-body` and `--print-headers` option.
 
 ```bash
-$ aurl --no-body --print-headers options http://api.example.com/path/to/resource
+$ aurl --no-print-body --print-headers -X OPTIONS http://api.example.com/path/to/resource
 {"Content-Type":["application/json;charset=UTF-8"],"Date":["Tue, 17 Feb 2015 08:16:41 GMT"],"Server":["nginx/1.6.2"], ...}
 ```
 
 ## Contribution
 
-1. Fork ([https://github.com/classmethod-aws/aurl/fork](https://github.com/classmethod-aws/aurl/fork))
+1. Fork ([https://github.com/classmethod/aurl/fork](https://github.com/classmethod/aurl/fork))
 1. Create a feature branch named like `feature/something_awesome_feature` from `development` branch
 1. Commit your changes
 1. Rebase your local changes against the `develop` branch
@@ -163,4 +159,4 @@ $ aurl --no-body --print-headers options http://api.example.com/path/to/resource
 
 ## Author
 
-[Daisuke Miyamoto](https://github.com/miyamoto-daisuke)
+[Daisuke Miyamoto](https://github.com/dai0304)
