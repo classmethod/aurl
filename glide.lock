@@ -1,0 +1,34 @@
+hash: 310e9f017d31dafc9def0581785fda0d62e9f2e8365420358f4e9e1724624054
+updated: 2016-04-30T15:00:11.784521601+09:00
+imports:
+- name: github.com/codegangsta/cli
+  version: 222ec6fb7eb8a3da24cfa4017694ba45e3f1f516
+- name: github.com/golang/protobuf
+  version: 7cc19b78d562895b13596ddce7aafb59dd789318
+  subpackages:
+  - proto
+- name: github.com/grategames/ini
+  version: 860b5140bc02fe9438df6526fed2348b2b3f192a
+- name: github.com/mitchellh/go-homedir
+  version: 981ab348d865cf048eb7d17e78ac7192632d8415
+- name: github.com/rakyll/goini
+  version: 907cca0f578a5316fb864ec6992dc3d9730ec58c
+- name: golang.org/x/net
+  version: 1aafd77e1e7f6849ad16a7bdeb65e3589a10b2bb
+  subpackages:
+  - context
+- name: golang.org/x/oauth2
+  version: 9ef2eddcc6774e42f998940fe1167216d36a7424
+  subpackages:
+  - internal
+- name: google.golang.org/appengine
+  version: e234e71924d4aa52444bc76f2f831f13fa1eca60
+  subpackages:
+  - urlfetch
+  - internal
+  - internal/urlfetch
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/remote_api
+devImports: []
