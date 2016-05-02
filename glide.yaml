@@ -1,10 +1,6 @@
-package: aurl
+package: github.com/classmethod/aurl
 import:
-- package: github.com/codegangsta/cli
-- package: github.com/grategames/ini
 - package: github.com/mitchellh/go-homedir
 - package: github.com/rakyll/goini
-- package: golang.org/x/net
-  subpackages:
-  - context
-- package: golang.org/x/oauth2
+- package: github.com/toqueteos/webbrowser
+- package: gopkg.in/alecthomas/kingpin.v2
