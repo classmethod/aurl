@@ -12,7 +12,8 @@ import (
 	"os"
 )
 
-const TOKEN_STORAGE_FORMAT = "~/.aurl/token/%s.json"
+const TOKEN_STORAGE_DIR = "~/.aurl/token"
+const TOKEN_STORAGE_FORMAT = TOKEN_STORAGE_DIR + "/%s.json"
 
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
@@ -52,6 +53,7 @@ func LoadTokenResponseString(profileName string) (*string, error) {
 }
 
 func SaveTokenResponseString(profileName string, tokenResponseString *string) {
+	os.Mkdir(utils.ExpandPath(TOKEN_STORAGE_DIR), os.FileMode(0755))
 	path := utils.ExpandPath(fmt.Sprintf(TOKEN_STORAGE_FORMAT, profileName))
 	content := []byte(*tokenResponseString)
 	err := ioutil.WriteFile(path, content, os.FileMode(0600))
