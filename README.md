@@ -47,6 +47,7 @@ Section name is utilized as profile name.  In each section following key setting
 | scopes                        | space separated scope values      | read write    | (any)            | no                              |
 | username                      | username for password grant       | (none)        | (any)            | no (except for password grant)  |
 | password                      | password for password grant       | (none)        | (any)            | no (except for password grant)  |
+| default\_content\_type        | default content type header       | (none)        | (any)            | no                              |
 
 
 Implicit flow is not supported currently.
@@ -58,6 +59,7 @@ Implicit flow is not supported currently.
 auth_server_auth_endpoint = https://api.example.com/oauth/authorize
 auth_server_token_endpoint = https://api.example.com/oauth/token
 redirect = https://api.example.com/oauth/oob
+default_content_type = application/json
 
 [foobar]
 grant_type = password

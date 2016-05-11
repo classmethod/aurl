@@ -39,7 +39,7 @@ func (execution *AurlExecution) Execute() error {
 		if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
 			log.Printf("Stored access token: %v", tokenResponse.AccessToken)
 			if tokenResponse.IsExpired() == false {
-				response, err := execution.doRequest(tokenResponse)
+				response, err := execution.doRequest(tokenResponse, execution.Profile)
 				if err == nil {
 					log.Printf("Stored access token was valid")
 					execution.doPrint(response)
@@ -57,7 +57,7 @@ func (execution *AurlExecution) Execute() error {
 						log.Printf("Refreshed token response: >>>\n%v\n<<<", *tokenResponseString)
 					}
 					if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
-						if response, err := execution.doRequest(tokenResponse); err == nil {
+						if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
 							log.Printf("Refreshed access token was valid")
 							execution.doPrint(response)
 							tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
@@ -87,7 +87,7 @@ func (execution *AurlExecution) Execute() error {
 		}
 		if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
 			log.Printf("Issued access token: %v", tokenResponse.AccessToken)
-			if response, err := execution.doRequest(tokenResponse); err == nil {
+			if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
 				log.Printf("Issued access token was valid")
 				execution.doPrint(response)
 				tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
@@ -121,7 +121,7 @@ func (request *AurlExecution) grant() (*string, error) {
 	}
 }
 
-func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse) (*http.Response, error) {
+func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, profile profiles.Profile) (*http.Response, error) {
 	body := strings.NewReader(*request.Data)
 	req, err := http.NewRequest(*request.Method, *request.TargetUrl, body)
 	if err != nil {
@@ -131,6 +131,9 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse) (*ht
 	req.Header = *request.Headers
 	if req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", request.Name, request.Version))
+	}
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", profile.DefaultContentType)
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResponse.AccessToken))
 
