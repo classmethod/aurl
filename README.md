@@ -117,7 +117,8 @@ Flags:
       --version                  Show application version.
 
 Args:
-  <url>  The URL to request```
+  <url>  The URL to request
+```
 
 ###### EXAMPLE
 
