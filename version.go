@@ -1,3 +1,5 @@
 package main
 
-const Version string = "0.5-SNAPSHOT"
+const Name string = "aurl"
+const Version string = "1.0-SNAPSHOT"
+const Author string = "Daisuke Miyamoto <miyamoto.daisuke@classmethod.jp>"
