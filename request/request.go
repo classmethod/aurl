@@ -41,14 +41,14 @@ func (execution *AurlExecution) Execute() error {
 			if tokenResponse.IsExpired() == false {
 				response, err := execution.doRequest(tokenResponse, execution.Profile)
 				if err == nil {
-					log.Printf("Stored access token was valid")
+					log.Println("Stored access token was valid")
 					execution.doPrint(response)
 					return nil
 				} else {
 					log.Printf("Stored access token was invalid: %v", err.Error())
 				}
 			} else {
-				log.Printf("Stored access token was expired")
+				log.Println("Stored access token was expired")
 			}
 			if tokenResponse.RefreshToken != "" {
 				log.Printf("Stored refresh token: %v", tokenResponse.RefreshToken)
@@ -58,7 +58,7 @@ func (execution *AurlExecution) Execute() error {
 					}
 					if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
 						if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
-							log.Printf("Refreshed access token was valid")
+							log.Println("Refreshed access token was valid")
 							execution.doPrint(response)
 							tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
 							return nil
@@ -72,7 +72,7 @@ func (execution *AurlExecution) Execute() error {
 					log.Printf("Stored refresh token was invalid: %v", err.Error())
 				}
 			} else {
-				log.Printf("Stored refresh token was not found")
+				log.Println("Stored refresh token was not found")
 			}
 		} else {
 			log.Printf("Failed to parse stored token response: %v", err.Error())
@@ -88,7 +88,7 @@ func (execution *AurlExecution) Execute() error {
 		if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
 			log.Printf("Issued access token: %v", tokenResponse.AccessToken)
 			if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
-				log.Printf("Issued access token was valid")
+				log.Println("Issued access token was valid")
 				execution.doPrint(response)
 				tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
 				return nil
@@ -140,7 +140,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
 		log.Printf("Dominant request >>>\n%s\n<<<", string(dumpReq))
 	} else {
-		log.Printf("Dominant request dump failed: ", err)
+		log.Printf("Dominant request dump failed: %v", err)
 	}
 
 	client := &http.Client{
@@ -152,7 +152,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 				redirectRequest.Header.Set("User-Agent", fmt.Sprintf("%s-%s", request.Name, request.Version))
 			}
 			if matchServer(redirectRequest.URL, req.URL) {
-				log.Printf("Propagate authorization header")
+				log.Println("Propagate authorization header")
 				redirectRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResponse.AccessToken))
 				return nil
 			} else {
@@ -167,7 +167,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Dominant request failed")
+		log.Println("Dominant request failed")
 		return resp, err
 	}
 	defer resp.Body.Close()
@@ -175,7 +175,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	if dumpResp, err := httputil.DumpResponse(resp, true); err == nil {
 		log.Printf("Dominant response >>>\n%s\n<<<", string(dumpResp))
 	} else {
-		log.Printf("Dominant response dump failed: ", err)
+		log.Printf("Dominant response dump failed: %v", err)
 	}
 
 	if resp.StatusCode == 401 {
@@ -195,7 +195,7 @@ func (request *AurlExecution) doPrint(response *http.Response) {
 		if err == nil {
 			fmt.Println(string(headers))
 		} else {
-			log.Println("Header marshaling failed: ", err)
+			log.Printf("Header marshaling failed: %v", err)
 			log.Println("Continue...")
 			fmt.Println("{}")
 		}
@@ -207,7 +207,7 @@ func (request *AurlExecution) doPrint(response *http.Response) {
 		log.Println("Printing body")
 		_, err := io.Copy(os.Stdout, response.Body)
 		if err != nil {
-			log.Println("Error on read: %v", err)
+			log.Printf("Error on read: %v", err)
 		}
 	} else {
 		log.Println("No printing body")
