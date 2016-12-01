@@ -39,7 +39,7 @@ func (execution *AurlExecution) Execute() error {
 		if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
 			log.Printf("Stored access token: %v", tokenResponse.AccessToken)
 			if tokenResponse.IsExpired() == false {
-				response, err := execution.doRequest(tokenResponse, execution.Profile)
+				response, err := execution.doWork(tokenResponse, execution.Profile)
 				if err == nil {
 					log.Println("Stored access token was valid")
 					execution.doPrint(response)
@@ -57,7 +57,7 @@ func (execution *AurlExecution) Execute() error {
 						log.Printf("Refreshed token response: >>>\n%v\n<<<", *tokenResponseString)
 					}
 					if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
-						if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
+						if response, err := execution.doWork(tokenResponse, execution.Profile); err == nil {
 							log.Println("Refreshed access token was valid")
 							execution.doPrint(response)
 							tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
@@ -120,6 +120,19 @@ func (request *AurlExecution) grant() (*string, error) {
 	default:					return nil, errors.New("Unknown grant type: " + request.Profile.GrantType)
 	}
 }
+
+func (request *AurlExecution) doWork(tokenResponse tokens.TokenResponse, profile profiles.Profile) (*http.Response, error) {
+	if *request.TargetUrl == "introspect" {
+		return introspectRequest(tokenResponse.AccessToken, request)
+	}
+	
+	if *request.TargetUrl == "revoke" {
+		return revokeRequest(tokenResponse.AccessToken, request)
+	}
+	
+	return request.doRequest(tokenResponse, profile)
+}
+
 
 func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, profile profiles.Profile) (*http.Response, error) {
 	body := strings.NewReader(*request.Data)

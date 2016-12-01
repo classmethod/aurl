@@ -13,6 +13,8 @@ type Profile struct {
 	ClientSecret string
 	AuthorizationEndpoint string
 	TokenEndpoint string
+	IntrospectionEndpoint string
+	RevocationEndpoint string
 	RedirectURI string
 	GrantType string
 	Scope string
@@ -28,6 +30,8 @@ const (
 	CLIENT_SECRET              = "client_secret"
 	AUTH_SERVER_AUTH_ENDPOINT  = "auth_server_auth_endpoint"
 	AUTH_SERVER_TOKEN_ENDPOINT = "auth_server_token_endpoint"
+	INTROSPECTION_ENDPOINT     = "introspection_endpoint"
+	REVOCATION_ENDPOINT        = "revocation_endpoint"
 	REDIRECT                   = "redirect"
 	GRANT_TYPE                 = "grant_type"
 	SCOPES                     = "scopes"
@@ -52,6 +56,8 @@ func LoadProfile(profileName string) (Profile, error) {
 			ClientSecret:			getOrDefault(p, CLIENT_SECRET, DEFAULT_CLIENT_SECRET),
 			AuthorizationEndpoint:	getOrDefault(p, AUTH_SERVER_AUTH_ENDPOINT, ""),
 			TokenEndpoint:			getOrDefault(p, AUTH_SERVER_TOKEN_ENDPOINT, ""),
+			IntrospectionEndpoint:	getOrDefault(p, INTROSPECTION_ENDPOINT, ""),
+			RevocationEndpoint:		getOrDefault(p, REVOCATION_ENDPOINT, ""),
 			RedirectURI:			getOrDefault(p, REDIRECT, ""),
 			GrantType:				getOrDefault(p, GRANT_TYPE, DEFAULT_GRANT_TYPE),
 			Scope:					getOrDefault(p, SCOPES, DEFAULT_SCOPES),

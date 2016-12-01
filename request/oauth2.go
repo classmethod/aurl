@@ -111,7 +111,7 @@ func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
 		log.Printf("Token request >>>\n%s\n<<<", string(dumpReq))
 	} else {
-		log.Printf("Token request dump failed: ", err)
+		log.Printf("Token request dump failed: %v", err)
 	}
 
 	client := &http.Client{
@@ -131,7 +131,7 @@ func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
 	if dumpResp, err := httputil.DumpResponse(resp, true); err == nil {
 		log.Printf("Token response >>>\n%s\n<<<", string(dumpResp))
 	} else {
-		log.Printf("Token response dump failed: ", err)
+		log.Printf("Token response dump failed: %v", err)
 	}
 
 	if resp.StatusCode == 200 {
@@ -145,6 +145,70 @@ func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
 		log.Printf("Token request failed: %d", resp.StatusCode)
 		return nil, err
 	}
+}
+
+func introspectRequest(token string, request *AurlExecution) (*http.Response, error) {
+	values := url.Values{
+		"token": {token},
+	}
+	
+	req, err := http.NewRequest("POST", request.Profile.IntrospectionEndpoint, strings.NewReader(values.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(request.Profile.ClientId, request.Profile.ClientSecret)
+	
+	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
+		log.Printf("Introspection request >>>\n%s\n<<<", string(dumpReq))
+	} else {
+		log.Printf("Introspection request dump failed: %v", err)
+	}
+	
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: *request.Insecure,
+			},
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Introspection request failed: %s", err.Error())
+	}
+	return resp, err
+}
+
+func revokeRequest(token string,request *AurlExecution) (*http.Response, error) {
+	values := url.Values{
+		"token": {token},
+	}
+	
+	req, err := http.NewRequest("POST", request.Profile.RevocationEndpoint, strings.NewReader(values.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(request.Profile.ClientId, request.Profile.ClientSecret)
+	
+	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
+		log.Printf("Revocation request >>>\n%s\n<<<", string(dumpReq))
+	} else {
+		log.Printf("Revocation request dump failed: %v", err)
+	}
+	
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: *request.Insecure,
+			},
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Revocation request failed: %s", err.Error())
+	}
+	return resp, err
 }
 
 
