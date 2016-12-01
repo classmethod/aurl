@@ -43,6 +43,8 @@ Section name is utilized as profile name.  In each section following key setting
 | client_secret                 | client secret                     | aurl          | (any)            | no                              |
 | auth\_server\_auth\_endpoint  | OAuth2 authorization endpoint URI | (none)        | (any)            | YES (except for password grant) |
 | auth\_server\_token\_endpoint | OAuth2 token endpoint URI         | (none)        | (any)            | YES                             |
+| introspection\_endpoint       | OAuth2 introspection endpoint URI | (none)        | (any)            | no                              |
+| revocation\_endpoint          | OAuth2 revocation endpoint URI    | (none)        | (any)            | no                              |
 | redirect                      | redirect URI                      | (none)        | (any)            | YES (except for password grant) |
 | scopes                        | space separated scope values      | read write    | (any)            | no                              |
 | username                      | username for password grant       | (none)        | (any)            | no (except for password grant)  |
@@ -58,6 +60,8 @@ Implicit flow is not supported currently.
 [default]
 auth_server_auth_endpoint = https://api.example.com/oauth/authorize
 auth_server_token_endpoint = https://api.example.com/oauth/token
+introspection_endpoint = https://api.example.com/oauth/introspect
+revocation_endpoint = https://api.example.com/oauth/revoke
 redirect = https://api.example.com/oauth/oob
 default_content_type = application/json
 
@@ -139,6 +143,33 @@ $ aurl --profile google https://www.googleapis.com/plus/v1/people/me
 {
  "kind": "plus#person",
 ...
+}
+```
+
+If you specify `introspect` for url argument, aurl make introspection request.
+
+```bash
+$ aurl --profile default introspect
+{
+  "active": true,
+  "iss": "https://api.example.com",
+  "scope": "foobar",
+  "exp": 1480601706,
+  "sub": "user01",
+  "username": "user01",
+  "client_id": "aurl",
+  "token_type": "bearer"
+}
+```
+
+If you specify `revoke` for url argument, aurl make revocation request.  After revocation, introspection endpoint
+will return the access token is no longer active.
+
+```bash
+$ aurl --profile default revoke
+$ aurl --profile default introspect
+{
+  "active": false
 }
 ```
 
