@@ -2,7 +2,7 @@ aurl
 ====
 
 [![CircleCI](https://img.shields.io/circleci/project/github/classmethod/aurl.svg)](https://circleci.com/gh/classmethod/aurl)
-[![License](https://img.shields.io/github/licenseclassmethod/aurl.svg)](https://github.com/classmethod/aurl/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/classmethod/aurl.svg)](https://github.com/classmethod/aurl/blob/master/LICENSE)
 
 ## Description
 
