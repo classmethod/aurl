@@ -106,12 +106,13 @@ func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Accept", "application/json")
 	req.SetBasicAuth(request.Profile.ClientId, request.Profile.ClientSecret)
 
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
 		log.Printf("Token request >>>\n%s\n<<<", string(dumpReq))
 	} else {
-		log.Printf("Token request dump failed: ", err)
+		log.Printf("Token request dump failed: %s", err)
 	}
 
 	client := &http.Client{
@@ -122,16 +123,17 @@ func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
 		},
 	}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Printf("Token request failed: %s", err.Error())
 		return nil, err
 	}
 
+	defer resp.Body.Close()
+
 	if dumpResp, err := httputil.DumpResponse(resp, true); err == nil {
 		log.Printf("Token response >>>\n%s\n<<<", string(dumpResp))
 	} else {
-		log.Printf("Token response dump failed: ", err)
+		log.Printf("Token response dump failed: %s", err)
 	}
 
 	if resp.StatusCode == 200 {
