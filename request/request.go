@@ -1,31 +1,31 @@
 package request
 
 import (
-	"io"
-	"os"
-	"fmt"
-	"log"
-	"errors"
-	"strings"
-	"net/url"
-	"net/http"
-	"net/http/httputil"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/classmethod/aurl/profiles"
 	"github.com/classmethod/aurl/tokens"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
+	"strings"
 )
 
 type AurlExecution struct {
-	Name string
+	Name    string
 	Version string
 
-	Profile profiles.Profile
-	Method *string
-	Headers *http.Header
-	Data *string
-	Insecure *bool
-	PrintBody *bool
+	Profile      profiles.Profile
+	Method       *string
+	Headers      *http.Header
+	Data         *string
+	Insecure     *bool
+	PrintBody    *bool
 	PrintHeaders *bool
 
 	TargetUrl *string
@@ -113,11 +113,16 @@ func (request *AurlExecution) refresh(tokenResponse tokens.TokenResponse) (*stri
 
 func (request *AurlExecution) grant() (*string, error) {
 	switch request.Profile.GrantType {
-	case "authorization_code":	return authCodeGrant(request)
-	case "implicit":			return implicitGrant(request)
-	case "password":			return resourceOwnerPasswordCredentialsGrant(request)
-	case "client_credentials":	return clientCredentialsGrant(request)
-	default:					return nil, errors.New("Unknown grant type: " + request.Profile.GrantType)
+	case "authorization_code":
+		return authCodeGrant(request)
+	case "implicit":
+		return implicitGrant(request)
+	case "password":
+		return resourceOwnerPasswordCredentialsGrant(request)
+	case "client_credentials":
+		return clientCredentialsGrant(request)
+	default:
+		return nil, errors.New("Unknown grant type: " + request.Profile.GrantType)
 	}
 }
 

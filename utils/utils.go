@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"strings"
 	"github.com/mitchellh/go-homedir"
+	"strings"
 )
 
 func ExpandPath(path string) string {
