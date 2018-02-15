@@ -146,7 +146,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	client := &http.Client{
 		CheckRedirect: func(redirectRequest *http.Request, via []*http.Request) error {
 			log.Printf("Redirect to %s", redirectRequest.URL.String())
-			log.Printf("Rriginal request Host = %s", req.URL.String())
+			log.Printf("Original request Host = %s", req.URL.String())
 			redirectRequest.Header = *request.Headers
 			if redirectRequest.Header.Get("User-Agent") == "" {
 				redirectRequest.Header.Set("User-Agent", fmt.Sprintf("%s-%s", request.Name, request.Version))
