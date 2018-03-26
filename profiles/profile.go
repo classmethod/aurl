@@ -1,24 +1,24 @@
 package profiles
 
 import (
-	"fmt"
 	"errors"
-	ini "github.com/rakyll/goini"
+	"fmt"
 	"github.com/classmethod/aurl/utils"
+	ini "github.com/rakyll/goini"
 )
 
 type Profile struct {
-	Name string
-	ClientId string
-	ClientSecret string
+	Name                  string
+	ClientId              string
+	ClientSecret          string
 	AuthorizationEndpoint string
-	TokenEndpoint string
-	RedirectURI string
-	GrantType string
-	Scope string
-	Username string
-	Password string
-	DefaultContentType string
+	TokenEndpoint         string
+	RedirectURI           string
+	GrantType             string
+	Scope                 string
+	Username              string
+	Password              string
+	DefaultContentType    string
 }
 
 const (
@@ -47,17 +47,17 @@ func LoadProfile(profileName string) (Profile, error) {
 		return Profile{}, err
 	} else if p, ok := dict[profileName]; ok {
 		return Profile{
-			Name:					profileName,
-			ClientId:				getOrDefault(p, CLIENT_ID, DEFAULT_CLIENT_ID),
-			ClientSecret:			getOrDefault(p, CLIENT_SECRET, DEFAULT_CLIENT_SECRET),
-			AuthorizationEndpoint:	getOrDefault(p, AUTH_SERVER_AUTH_ENDPOINT, ""),
-			TokenEndpoint:			getOrDefault(p, AUTH_SERVER_TOKEN_ENDPOINT, ""),
-			RedirectURI:			getOrDefault(p, REDIRECT, ""),
-			GrantType:				getOrDefault(p, GRANT_TYPE, DEFAULT_GRANT_TYPE),
-			Scope:					getOrDefault(p, SCOPES, DEFAULT_SCOPES),
-			Username:				getOrDefault(p, USERNAME, ""),
-			Password:				getOrDefault(p, PASSWORD, ""),
-			DefaultContentType:		getOrDefault(p, DEFAULT_CONTENT_TYPE, ""),
+			Name:                  profileName,
+			ClientId:              getOrDefault(p, CLIENT_ID, DEFAULT_CLIENT_ID),
+			ClientSecret:          getOrDefault(p, CLIENT_SECRET, DEFAULT_CLIENT_SECRET),
+			AuthorizationEndpoint: getOrDefault(p, AUTH_SERVER_AUTH_ENDPOINT, ""),
+			TokenEndpoint:         getOrDefault(p, AUTH_SERVER_TOKEN_ENDPOINT, ""),
+			RedirectURI:           getOrDefault(p, REDIRECT, ""),
+			GrantType:             getOrDefault(p, GRANT_TYPE, DEFAULT_GRANT_TYPE),
+			Scope:                 getOrDefault(p, SCOPES, DEFAULT_SCOPES),
+			Username:              getOrDefault(p, USERNAME, ""),
+			Password:              getOrDefault(p, PASSWORD, ""),
+			DefaultContentType:    getOrDefault(p, DEFAULT_CONTENT_TYPE, ""),
 		}, nil
 	} else {
 		return Profile{}, errors.New("Unknown profile: " + profileName)
@@ -72,7 +72,6 @@ func (p Profile) String() string {
 	return fmt.Sprintf("{name:%s, clientId:%s, authEndpoint:%s, tokendEndpoint:%s, redirect:%s, grantType:%s, scooe:%s}",
 		p.Name, p.ClientId, p.AuthorizationEndpoint, p.TokenEndpoint, p.RedirectURI, p.GrantType, p.Scope)
 }
-
 
 func getOrDefault(dict map[string]string, key string, defaultValue string) string {
 	if v, ok := dict[key]; ok {

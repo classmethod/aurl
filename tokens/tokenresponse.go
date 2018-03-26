@@ -1,15 +1,15 @@
 package tokens
 
 import (
-	"os"
-	"log"
-	"fmt"
-	"time"
-	"errors"
-	"strings"
-	"io/ioutil"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/classmethod/aurl/utils"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+	"time"
 )
 
 const TOKEN_STORAGE_DIR = "~/.aurl/token"

@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"net/http"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"net/http"
+	"strings"
 )
 
 type HTTPHeaderValue http.Header
