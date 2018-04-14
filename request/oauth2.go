@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
-	"github.com/toqueteos/webbrowser"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,6 +15,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/toqueteos/webbrowser"
 )
 
 func authCodeGrant(request *AurlExecution) (*string, error) {

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/classmethod/aurl/profiles"
-	"github.com/classmethod/aurl/request"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"log"
+
+	"github.com/classmethod/aurl/profiles"
+	"github.com/classmethod/aurl/request"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 // Exit codes are int values that represent an exit code for a particular error.
@@ -38,8 +39,8 @@ var (
 // Run invokes the CLI with the given arguments.
 func (cli *CLI) Run(args []string) int {
 	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version(Version).Author(Author)
-	kingpin.CommandLine.GetFlag("version").Short('V')
-	kingpin.CommandLine.GetFlag("help").Short('h')
+	kingpin.CommandLine.VersionFlag.Short('V')
+	kingpin.CommandLine.HelpFlag.Short('h')
 	kingpin.CommandLine.Help = "Command line utility to make HTTP request with OAuth2."
 	kingpin.Parse()
 

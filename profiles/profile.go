@@ -3,6 +3,7 @@ package profiles
 import (
 	"errors"
 	"fmt"
+
 	"github.com/classmethod/aurl/utils"
 	ini "github.com/rakyll/goini"
 )
