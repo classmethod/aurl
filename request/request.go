@@ -94,7 +94,6 @@ func (execution *AurlExecution) Execute() error {
 				return nil
 			} else {
 				log.Printf("Granted access token was invalid: %v", err.Error())
-				execution.doPrint(response)
 				return err
 			}
 		} else {
