@@ -38,8 +38,8 @@ var (
 // Run invokes the CLI with the given arguments.
 func (cli *CLI) Run(args []string) int {
 	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version(Version).Author(Author)
-	kingpin.CommandLine.GetFlag("version").Short('V')
-	kingpin.CommandLine.GetFlag("help").Short('h')
+	kingpin.CommandLine.VersionFlag.Short('V')
+	kingpin.CommandLine.HelpFlag.Short('h')
 	kingpin.CommandLine.Help = "Command line utility to make HTTP request with OAuth2."
 	kingpin.Parse()
 
