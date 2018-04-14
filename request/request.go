@@ -145,7 +145,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
 		log.Printf("Dominant request >>>\n%s\n<<<", string(dumpReq))
 	} else {
-		log.Printf("Dominant request dump failed: ", err)
+		log.Printf("Dominant request dump failed: %v", err)
 	}
 
 	client := &http.Client{
@@ -180,7 +180,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	if dumpResp, err := httputil.DumpResponse(resp, true); err == nil {
 		log.Printf("Dominant response >>>\n%s\n<<<", string(dumpResp))
 	} else {
-		log.Printf("Dominant response dump failed: ", err)
+		log.Printf("Dominant response dump failed: %v", err)
 	}
 
 	if resp.StatusCode == 401 {
@@ -212,7 +212,8 @@ func (request *AurlExecution) doPrint(response *http.Response) {
 		log.Println("Printing body")
 		_, err := io.Copy(os.Stdout, response.Body)
 		if err != nil {
-			log.Println("Error on read: %v", err)
+			log.Printf("Error on read: %v", err)
+			log.Println()
 		}
 	} else {
 		log.Println("No printing body")
