@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/classmethod/aurl/utils"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/classmethod/aurl/utils"
 )
 
 const TOKEN_STORAGE_DIR = "~/.aurl/token"

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/classmethod/aurl/profiles"
-	"github.com/classmethod/aurl/request"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"log"
+
+	"github.com/classmethod/aurl/profiles"
+	"github.com/classmethod/aurl/request"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 // Exit codes are int values that represent an exit code for a particular error.
