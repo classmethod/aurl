@@ -53,6 +53,7 @@ Section name is utilized as profile name.  In each section following key setting
 | username                      | username for password grant       | (none)        | (any)            | no (except for password grant)  |
 | password                      | password for password grant       | (none)        | (any)            | no (except for password grant)  |
 | default\_content\_type        | default content type header       | (none)        | (any)            | no                              |
+| default\_user\_agent          | default user agent   header       | aurl x.x.x    | (any)            | no                              |
 
 
 Implicit flow is not supported currently.

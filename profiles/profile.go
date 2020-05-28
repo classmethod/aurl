@@ -20,6 +20,7 @@ type Profile struct {
 	Username              string
 	Password              string
 	DefaultContentType    string
+	UserAgent             string
 }
 
 const (
@@ -35,6 +36,7 @@ const (
 	USERNAME                   = "username"
 	PASSWORD                   = "password"
 	DEFAULT_CONTENT_TYPE       = "default_content_type"
+	DEFAULT_USER_AGENT         = "default_user_agent"
 	//SOURCE_PROFILE             = "source_profile"
 
 	DEFAULT_CLIENT_ID     = "aurl"
@@ -59,6 +61,7 @@ func LoadProfile(profileName string) (Profile, error) {
 			Username:              getOrDefault(p, USERNAME, ""),
 			Password:              getOrDefault(p, PASSWORD, ""),
 			DefaultContentType:    getOrDefault(p, DEFAULT_CONTENT_TYPE, ""),
+			UserAgent:             getOrDefault(p, DEFAULT_USER_AGENT, ""),
 		}, nil
 	} else {
 		return Profile{}, errors.New("Unknown profile: " + profileName)

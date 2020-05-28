@@ -135,8 +135,13 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 
 	req.Header = *execution.Headers
 	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", execution.Name, execution.Version))
+		if execution.Profile.UserAgent != "" {
+			req.Header.Set("User-Agent", execution.Profile.UserAgent)
+		} else {
+			req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", execution.Name, execution.Version))
+		}
 	}
+
 	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", profile.DefaultContentType)
 	}
@@ -154,7 +159,11 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 			log.Printf("Original request Host = %s", req.URL.String())
 			redirectRequest.Header = *execution.Headers
 			if redirectRequest.Header.Get("User-Agent") == "" {
-				redirectRequest.Header.Set("User-Agent", fmt.Sprintf("%s-%s", execution.Name, execution.Version))
+				if execution.Profile.UserAgent != "" {
+					req.Header.Set("User-Agent", execution.Profile.UserAgent)
+				} else {
+					req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", execution.Name, execution.Version))
+				}
 			}
 			if matchServer(redirectRequest.URL, req.URL) {
 				log.Printf("Propagate authorization header")
