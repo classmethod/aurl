@@ -134,12 +134,9 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 	}
 
 	req.Header = *execution.Headers
+
 	if req.Header.Get("User-Agent") == "" {
-		if execution.Profile.UserAgent != "" {
-			req.Header.Set("User-Agent", execution.Profile.UserAgent)
-		} else {
-			req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", execution.Name, execution.Version))
-		}
+		req.Header.Set("User-Agent", profile.UserAgent)
 	}
 
 	if req.Header.Get("Content-Type") == "" {
