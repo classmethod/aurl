@@ -156,11 +156,7 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 			log.Printf("Original request Host = %s", req.URL.String())
 			redirectRequest.Header = *execution.Headers
 			if redirectRequest.Header.Get("User-Agent") == "" {
-				if execution.Profile.UserAgent != "" {
-					req.Header.Set("User-Agent", execution.Profile.UserAgent)
-				} else {
-					req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", execution.Name, execution.Version))
-				}
+				redirectRequest.Header.Set("User-Agent", profile.UserAgent)
 			}
 			if matchServer(redirectRequest.URL, req.URL) {
 				log.Printf("Propagate authorization header")
