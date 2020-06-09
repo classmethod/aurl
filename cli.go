@@ -7,6 +7,7 @@ import (
 
 	"github.com/classmethod/aurl/profiles"
 	"github.com/classmethod/aurl/request"
+	version "github.com/classmethod/aurl/version"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -38,7 +39,7 @@ var (
 
 // Run invokes the CLI with the given arguments.
 func (cli *CLI) Run(args []string) int {
-	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version(Version).Author(Author)
+	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version(version.Version).Author(version.Author)
 	kingpin.CommandLine.VersionFlag.Short('V')
 	kingpin.CommandLine.HelpFlag.Short('h')
 	kingpin.CommandLine.Help = "Command line utility to make HTTP request with OAuth2."
@@ -68,8 +69,8 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeError
 	} else {
 		execution := &request.AurlExecution{
-			Name:    Name,
-			Version: Version,
+			Name:    version.Name,
+			Version: version.Version,
 
 			Profile:      profile,
 			Method:       method,

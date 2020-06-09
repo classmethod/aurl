@@ -108,6 +108,11 @@ func tokenRequest(v url.Values, request *AurlExecution) (*string, error) {
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Accept", "application/json")
+
+	if request.Headers.Get("User-Agent") == "" {
+		req.Header.Add("User-Agent", request.Profile.UserAgent)
+	}
+
 	req.SetBasicAuth(request.Profile.ClientId, request.Profile.ClientSecret)
 
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
