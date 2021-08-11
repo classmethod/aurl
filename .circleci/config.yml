@@ -6,11 +6,10 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.8
+      - image: circleci/golang:1.16
     working_directory: /go/src/github.com/classmethod/aurl
     steps:
       - checkout
-      - run: curl https://glide.sh/get | sh
       - run: make deps
       - run: make
       - run:
