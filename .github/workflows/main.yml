@@ -1,5 +1,9 @@
 name: Main
 
+on:
+  push:
+    branches: ['*']
+
 jobs:
   main:
     name: Main
