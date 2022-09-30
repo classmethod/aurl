@@ -1,0 +1,17 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.16
+    working_directory: /go/src/github.com/classmethod/aurl
+    steps:
+      - checkout
+      - run: make deps
+      - run: make
+      - run:
+          name: Running test code
+          command: make test

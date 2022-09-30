@@ -2,6 +2,7 @@ package utils
 
 import (
 	"strings"
+
 	"github.com/mitchellh/go-homedir"
 )
 

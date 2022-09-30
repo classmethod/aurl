@@ -1,16 +1,18 @@
 package profiles
 
 import (
-	"fmt"
 	"errors"
-	ini "github.com/rakyll/goini"
+	"fmt"
+
 	"github.com/classmethod/aurl/utils"
+	version "github.com/classmethod/aurl/version"
+	ini "github.com/rakyll/goini"
 )
 
 type Profile struct {
-	Name string
-	ClientId string
-	ClientSecret string
+	Name                  string
+	ClientId              string
+	ClientSecret          string
 	AuthorizationEndpoint string
 	TokenEndpoint string
 	IntrospectionEndpoint string
@@ -38,6 +40,7 @@ const (
 	USERNAME                   = "username"
 	PASSWORD                   = "password"
 	DEFAULT_CONTENT_TYPE       = "default_content_type"
+	DEFAULT_USER_AGENT         = "default_user_agent"
 	//SOURCE_PROFILE             = "source_profile"
 
 	DEFAULT_CLIENT_ID     = "aurl"
@@ -64,6 +67,7 @@ func LoadProfile(profileName string) (Profile, error) {
 			Username:				getOrDefault(p, USERNAME, ""),
 			Password:				getOrDefault(p, PASSWORD, ""),
 			DefaultContentType:		getOrDefault(p, DEFAULT_CONTENT_TYPE, ""),
+			UserAgent:             getOrDefault(p, DEFAULT_USER_AGENT, fmt.Sprintf("%s-%s", version.Name, version.Version)),
 		}, nil
 	} else {
 		return Profile{}, errors.New("Unknown profile: " + profileName)
@@ -78,7 +82,6 @@ func (p Profile) String() string {
 	return fmt.Sprintf("{name:%s, clientId:%s, authEndpoint:%s, tokendEndpoint:%s, redirect:%s, grantType:%s, scooe:%s}",
 		p.Name, p.ClientId, p.AuthorizationEndpoint, p.TokenEndpoint, p.RedirectURI, p.GrantType, p.Scope)
 }
-
 
 func getOrDefault(dict map[string]string, key string, defaultValue string) string {
 	if v, ok := dict[key]; ok {

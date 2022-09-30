@@ -1,11 +1,16 @@
 aurl
 ====
 
+[![CircleCI](https://img.shields.io/circleci/project/github/classmethod/aurl.svg)](https://circleci.com/gh/classmethod/aurl)
+[![License](https://img.shields.io/github/license/classmethod/aurl.svg)](https://github.com/classmethod/aurl/blob/master/LICENSE)
+
 ## Description
 
 HTTP CLI client with OAuth 2.0 authentication.
 
-You know `curl` is powerful command line tool and you can make any complex HTTP request to every servers.  But the target web server is secured by OAuth 2.0, you must send another HTTP request to the authorization server before making principal request.  And more, you should to manage issued access tokens for every resources.
+You know `curl` is powerful command line tool and you can make any complex HTTP request to every servers.
+But the target web server is secured by OAuth 2.0, you must send another HTTP request to the authorization server
+before making principal request.  And more, you should to manage issued access tokens for every resources.
 
 `aurl` is a command-line tool that process OAuth 2.0 dance and manage access/refresh tokens automatically.
 
@@ -50,6 +55,7 @@ Section name is utilized as profile name.  In each section following key setting
 | username                      | username for password grant       | (none)        | (any)            | no (except for password grant)  |
 | password                      | password for password grant       | (none)        | (any)            | no (except for password grant)  |
 | default\_content\_type        | default content type header       | (none)        | (any)            | no                              |
+| default\_user\_agent          | default user agent   header       | aurl x.x.x    | (any)            | no                              |
 
 
 Implicit flow is not supported currently.
@@ -190,6 +196,22 @@ $ aurl --no-print-body --print-headers -X OPTIONS http://api.example.com/path/to
 1. Run test suite with the `go test ./...` command and confirm that it passes
 1. Run `gofmt -s`
 1. Create new Pull Request
+
+## Build
+
+```bash
+$ make deps
+$ make
+$ bin/aurl --help
+usage: aurl [<flags>] <url>
+
+Command line utility to make HTTP request with OAuth2.
+
+Flags:
+  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
+  ...
+```
+
 
 ## Author
 
