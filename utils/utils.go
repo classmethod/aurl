@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"path/filepath"
 	"strings"
+
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -16,5 +18,8 @@ func ExpandPath(path string) string {
 		path = strings.Replace(path, "~/", dir, 1)
 	}
 	//	log.Printf("path = %s", path)
+
+	// for file path separator difference between windows and unix
+	path = filepath.FromSlash(path)
 	return path
 }

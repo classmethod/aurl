@@ -1,31 +1,32 @@
 package request
 
 import (
-	"io"
-	"os"
-	"fmt"
-	"log"
-	"errors"
-	"strings"
-	"net/url"
-	"net/http"
-	"net/http/httputil"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
+	"strings"
+
 	"github.com/classmethod/aurl/profiles"
 	"github.com/classmethod/aurl/tokens"
 )
 
 type AurlExecution struct {
-	Name string
+	Name    string
 	Version string
 
-	Profile profiles.Profile
-	Method *string
-	Headers *http.Header
-	Data *string
-	Insecure *bool
-	PrintBody *bool
+	Profile      profiles.Profile
+	Method       *string
+	Headers      *http.Header
+	Data         *string
+	Insecure     *bool
+	PrintBody    *bool
 	PrintHeaders *bool
 
 	TargetUrl *string
@@ -94,7 +95,6 @@ func (execution *AurlExecution) Execute() error {
 				return nil
 			} else {
 				log.Printf("Granted access token was invalid: %v", err.Error())
-				execution.doPrint(response)
 				return err
 			}
 		} else {
@@ -107,31 +107,38 @@ func (execution *AurlExecution) Execute() error {
 	}
 }
 
-func (request *AurlExecution) refresh(tokenResponse tokens.TokenResponse) (*string, error) {
-	return refreshGrant(request, tokenResponse.RefreshToken)
+func (execution *AurlExecution) refresh(tokenResponse tokens.TokenResponse) (*string, error) {
+	return refreshGrant(execution, tokenResponse.RefreshToken)
 }
 
-func (request *AurlExecution) grant() (*string, error) {
-	switch request.Profile.GrantType {
-	case "authorization_code":	return authCodeGrant(request)
-	case "implicit":			return implicitGrant(request)
-	case "password":			return resourceOwnerPasswordCredentialsGrant(request)
-	case "client_credentials":	return clientCredentialsGrant(request)
-	default:					return nil, errors.New("Unknown grant type: " + request.Profile.GrantType)
+func (execution *AurlExecution) grant() (*string, error) {
+	switch execution.Profile.GrantType {
+	case "authorization_code":
+		return authCodeGrant(execution)
+	case "implicit":
+		return implicitGrant(execution)
+	case "password":
+		return resourceOwnerPasswordCredentialsGrant(execution)
+	case "client_credentials":
+		return clientCredentialsGrant(execution)
+	default:
+		return nil, errors.New("Unknown grant type: " + execution.Profile.GrantType)
 	}
 }
 
-func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, profile profiles.Profile) (*http.Response, error) {
-	body := strings.NewReader(*request.Data)
-	req, err := http.NewRequest(*request.Method, *request.TargetUrl, body)
+func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, profile profiles.Profile) (*http.Response, error) {
+	body := strings.NewReader(*execution.Data)
+	req, err := http.NewRequest(*execution.Method, *execution.TargetUrl, body)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = *request.Headers
+	req.Header = *execution.Headers
+
 	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", fmt.Sprintf("%s-%s", request.Name, request.Version))
+		req.Header.Set("User-Agent", profile.UserAgent)
 	}
+
 	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", profile.DefaultContentType)
 	}
@@ -140,16 +147,16 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
 		log.Printf("Dominant request >>>\n%s\n<<<", string(dumpReq))
 	} else {
-		log.Printf("Dominant request dump failed: ", err)
+		log.Printf("Dominant request dump failed: %v", err)
 	}
 
 	client := &http.Client{
 		CheckRedirect: func(redirectRequest *http.Request, via []*http.Request) error {
 			log.Printf("Redirect to %s", redirectRequest.URL.String())
-			log.Printf("Rriginal request Host = %s", req.URL.String())
-			redirectRequest.Header = *request.Headers
+			log.Printf("Original request Host = %s", req.URL.String())
+			redirectRequest.Header = *execution.Headers
 			if redirectRequest.Header.Get("User-Agent") == "" {
-				redirectRequest.Header.Set("User-Agent", fmt.Sprintf("%s-%s", request.Name, request.Version))
+				redirectRequest.Header.Set("User-Agent", profile.UserAgent)
 			}
 			if matchServer(redirectRequest.URL, req.URL) {
 				log.Printf("Propagate authorization header")
@@ -161,7 +168,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 		},
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: *request.Insecure,
+				InsecureSkipVerify: *execution.Insecure,
 			},
 		},
 	}
@@ -175,7 +182,7 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	if dumpResp, err := httputil.DumpResponse(resp, true); err == nil {
 		log.Printf("Dominant response >>>\n%s\n<<<", string(dumpResp))
 	} else {
-		log.Printf("Dominant response dump failed: ", err)
+		log.Printf("Dominant response dump failed: %v", err)
 	}
 
 	if resp.StatusCode == 401 {
@@ -185,11 +192,11 @@ func (request *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, prof
 	}
 }
 
-func (request *AurlExecution) doPrint(response *http.Response) {
+func (execution *AurlExecution) doPrint(response *http.Response) {
 	if response == nil {
 		return
 	}
-	if *request.PrintHeaders {
+	if *execution.PrintHeaders {
 		log.Println("Printing headers")
 		headers, err := json.Marshal(response.Header)
 		if err == nil {
@@ -203,11 +210,12 @@ func (request *AurlExecution) doPrint(response *http.Response) {
 		log.Println("No printing headers")
 	}
 
-	if *request.PrintBody {
+	if *execution.PrintBody {
 		log.Println("Printing body")
 		_, err := io.Copy(os.Stdout, response.Body)
 		if err != nil {
-			log.Println("Error on read: %v", err)
+			log.Printf("Error on read: %v", err)
+			log.Println()
 		}
 	} else {
 		log.Println("No printing body")

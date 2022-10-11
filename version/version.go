@@ -1,5 +1,5 @@
-package main
+package version
 
 const Name string = "aurl"
-const Version string = "1.0.1"
+const Version string = "1.1.0-SNAPSHOT"
 const Author string = "Daisuke Miyamoto <miyamoto.daisuke@classmethod.jp>"

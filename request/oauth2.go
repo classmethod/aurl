@@ -1,20 +1,21 @@
 package request
 
 import (
-	"os"
-	"fmt"
-	"log"
 	"bufio"
 	"bytes"
-	"strings"
-	"strconv"
-	"io/ioutil"
 	"crypto/rand"
 	"crypto/tls"
-	"net/url"
+	"encoding/binary"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
-	"encoding/binary"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/toqueteos/webbrowser"
 )
 
@@ -30,9 +31,9 @@ func authCodeGrant(request *AurlExecution) (*string, error) {
 		return nil, err
 	} else {
 		values := url.Values{
-			"grant_type":    {"authorization_code"},
-			"code":          {string(code)},
-			"redirect_uri":  {request.Profile.RedirectURI},
+			"grant_type":   {"authorization_code"},
+			"code":         {string(code)},
+			"redirect_uri": {request.Profile.RedirectURI},
 		}
 		return tokenRequest(values, request)
 	}
@@ -56,18 +57,18 @@ func implicitGrant(request *AurlExecution) (*string, error) {
 
 func resourceOwnerPasswordCredentialsGrant(request *AurlExecution) (*string, error) {
 	values := url.Values{
-		"grant_type":    {"password"},
-		"username":      {request.Profile.Username},
-		"password":      {request.Profile.Password},
-		"scope":         condVal(strings.Join(strings.Split(request.Profile.Scope, ","), " ")),
+		"grant_type": {"password"},
+		"username":   {request.Profile.Username},
+		"password":   {request.Profile.Password},
+		"scope":      condVal(strings.Join(strings.Split(request.Profile.Scope, ","), " ")),
 	}
 	return tokenRequest(values, request)
 }
 
 func clientCredentialsGrant(request *AurlExecution) (*string, error) {
 	values := url.Values{
-		"grant_type":    {"client_credentials"},
-		"scope":         condVal(strings.Join(strings.Split(request.Profile.Scope, ","), " ")),
+		"grant_type": {"client_credentials"},
+		"scope":      condVal(strings.Join(strings.Split(request.Profile.Scope, ","), " ")),
 	}
 	return tokenRequest(values, request)
 }
@@ -81,7 +82,7 @@ func refreshGrant(request *AurlExecution, refreshToken string) (*string, error) 
 	return tokenRequest(values, request)
 }
 
-func authorizationRequestURL(responseType string,request *AurlExecution, state string) string {
+func authorizationRequestURL(responseType string, request *AurlExecution, state string) string {
 	var buf bytes.Buffer
 	buf.WriteString(request.Profile.AuthorizationEndpoint)
 	v := url.Values{
@@ -100,13 +101,18 @@ func authorizationRequestURL(responseType string,request *AurlExecution, state s
 	return buf.String()
 }
 
-func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
+func tokenRequest(v url.Values, request *AurlExecution) (*string, error) {
 	req, err := http.NewRequest("POST", request.Profile.TokenEndpoint, strings.NewReader(v.Encode()))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Accept", "application/json")
+
+	if request.Headers.Get("User-Agent") == "" {
+		req.Header.Add("User-Agent", request.Profile.UserAgent)
+	}
+
 	req.SetBasicAuth(request.Profile.ClientId, request.Profile.ClientSecret)
 
 	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
@@ -148,7 +154,6 @@ func tokenRequest(v url.Values,request *AurlExecution) (*string, error) {
 		return nil, err
 	}
 }
-
 
 func condVal(v string) []string {
 	if v == "" {

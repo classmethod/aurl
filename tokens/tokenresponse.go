@@ -1,14 +1,15 @@
 package tokens
 
 import (
-	"os"
-	"log"
-	"fmt"
-	"time"
-	"errors"
-	"strings"
-	"io/ioutil"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/classmethod/aurl/utils"
 )
 
@@ -35,7 +36,7 @@ func New(tokenResponseString *string) (TokenResponse, error) {
 	var tokenResponse TokenResponse
 	jsonParser := json.NewDecoder(strings.NewReader(*tokenResponseString))
 	if err := jsonParser.Decode(&tokenResponse); err != nil {
-		log.Printf("Failed to parse token response", err)
+		log.Printf("Failed to parse token response: %v", err)
 		return TokenResponse{}, err
 	}
 	tokenResponse.Timestamp = time.Now().Unix()

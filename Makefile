@@ -23,8 +23,8 @@ cross-build:
   done
 
 .PHONY: deps
-deps: glide
-	glide install
+deps:
+	go mod download
 
 .PHONY: dist
 dist:
@@ -38,12 +38,6 @@ dist:
 .PHONY: build
 build:
 	go build $(LDFLAGS) -o bin/$(NAME)
-
-.PHONY: glide
-glide:
-ifeq ($(shell command -v glide 2> /dev/null),)
-	curl https://glide.sh/get | sh
-endif
 
 .PHONY: install
 install:
