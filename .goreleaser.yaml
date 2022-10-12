@@ -70,6 +70,6 @@ brews:
     # Custom install script for brew.
     # Default is 'bin.install "the binary name"'.
     install: |
-      bin.install "some_other_name"
+      bin.install "aurl"
       # bash_completion.install "completions/aurl.bash" => "aurl"
       # ...
