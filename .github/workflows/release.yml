@@ -2,10 +2,9 @@ name: Main
 
 on:
   push:
-    branches: ['*']
-  pull_request:
-    branches: ['*']
-
+    branches: ['master']
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
 jobs:
   main:
     name: Main
@@ -24,3 +23,11 @@ jobs:
         run: make
       - name: Test
         run: go test
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          # set github personal access token in order to generate brew formula to external repository
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
