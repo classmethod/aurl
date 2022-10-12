@@ -34,3 +34,5 @@ _testmain.go
 #
 aurl
 aurl_*
+
+dist/
