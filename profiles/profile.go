@@ -5,8 +5,12 @@ import (
 	"fmt"
 
 	"github.com/classmethod/aurl/utils"
-	version "github.com/classmethod/aurl/version"
 	ini "github.com/rakyll/goini"
+)
+
+var (
+	Name    = "aurl"
+	Version = "dev"
 )
 
 type Profile struct {
@@ -62,7 +66,7 @@ func LoadProfile(profileName string) (Profile, error) {
 			Username:              getOrDefault(p, USERNAME, ""),
 			Password:              getOrDefault(p, PASSWORD, ""),
 			DefaultContentType:    getOrDefault(p, DEFAULT_CONTENT_TYPE, ""),
-			UserAgent:             getOrDefault(p, DEFAULT_USER_AGENT, fmt.Sprintf("%s-%s", version.Name, version.Version)),
+			UserAgent:             getOrDefault(p, DEFAULT_USER_AGENT, fmt.Sprintf("%s-%s", Name, Version)),
 		}, nil
 	} else {
 		return Profile{}, errors.New("Unknown profile: " + profileName)
