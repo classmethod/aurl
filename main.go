@@ -5,11 +5,11 @@ import (
 )
 
 var (
-	name    = "aurl"
-	author  = "Seiichi Arai <arai.seiichi@classmethod.jp>"
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
+	name       = "aurl"
+	maintainer = "Seiichi Arai <arai.seiichi@classmethod.jp>"
+	version    = "dev"
+	commit     = "none"
+	date       = "unknown"
 )
 
 func main() {
