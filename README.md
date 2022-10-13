@@ -1,7 +1,7 @@
 aurl
 ====
 
-[![CircleCI](https://img.shields.io/circleci/project/github/classmethod/aurl.svg)](https://circleci.com/gh/classmethod/aurl)
+![Release](https://github.com/classmethod/aurl/workflows/Release/badge.svg)
 [![License](https://img.shields.io/github/license/classmethod/aurl.svg)](https://github.com/classmethod/aurl/blob/master/LICENSE)
 
 ## Description
@@ -18,16 +18,28 @@ before making principal request.  And more, you should to manage issued access t
 
 ## Install
 
-To install, use `homebrew` or `go get`:
+You can install the pre-compiled binary by either following the steps.
+
+### homebrew
 
 ```bash
-$ brew tap classmethod/repos
-$ brew install aurl
+brew tap classmethod/repos
+brew install aurl
 ```
 
+### scoop
+
+TBD
+
+### go install
+
 ```bash
-$ go get -d github.com/classmethod/aurl
+go install github.com/classmethod/aurl@latest
 ```
+
+### manually
+
+Download the [pre-compiled binaries](https://github.com/classmethod/aurl/releases) from the OSS releases page.
 
 ## Usage
 
@@ -54,7 +66,6 @@ Section name is utilized as profile name.  In each section following key setting
 | password                      | password for password grant       | (none)        | (any)            | no (except for password grant)  |
 | default\_content\_type        | default content type header       | (none)        | (any)            | no                              |
 | default\_user\_agent          | default user agent   header       | aurl x.x.x    | (any)            | no                              |
-
 
 Implicit flow is not supported currently.
 
@@ -99,7 +110,6 @@ scopes = https://www.googleapis.com/auth/plus.login https://www.googleapis.com/a
 Token store file `~/.aurl/token/*.json` is used by aurl internally.  Retrieved token response body is stored in this file.
 You SHOULD NOT edit this file manually because this file is overwritten at any time curl is executed.
 You may lose comment and another extra data.
-
 
 ### Execution
 
@@ -161,7 +171,7 @@ $ aurl --no-print-body --print-headers -X OPTIONS http://api.example.com/path/to
 1. Fork ([https://github.com/classmethod/aurl/fork](https://github.com/classmethod/aurl/fork))
 1. Create a feature branch named like `feature/something_awesome_feature` from `development` branch
 1. Commit your changes
-1. Rebase your local changes against the `develop` branch
+1. Rebase your local changes against the `master` branch
 1. Run test suite with the `go test ./...` command and confirm that it passes
 1. Run `gofmt -s`
 1. Create new Pull Request
@@ -181,7 +191,10 @@ Flags:
   ...
 ```
 
-
 ## Author
 
 [Daisuke Miyamoto](https://github.com/dai0304)
+
+## Maintainer
+
+[Seiichi Arai](https://github.com/seiichi1101)
