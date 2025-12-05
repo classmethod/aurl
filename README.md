@@ -35,7 +35,7 @@ For v2 alpha releases:
 brew install --cask https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/casks/aurl-v2-alpha.rb
 
 # Linux: Use Formula (precompiled binary)
-brew install https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/formula/aurl-v2-alpha.rb
+brew install https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/Formula/aurl-v2-alpha.rb
 ```
 
 ### scoop
