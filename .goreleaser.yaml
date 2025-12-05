@@ -1,5 +1,9 @@
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
+
+# GoReleaser v2 configuration
+version: 2
+
 before:
   hooks:
     # You may remove this if you don't use go modules.
@@ -14,19 +18,23 @@ builds:
       - windows
       - darwin
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
     format_overrides:
       - goos: windows
         format: zip
+    files:
+      - README.md
+      - LICENSE*
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
@@ -39,40 +47,36 @@ changelog:
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
 brews:
-  -
-    # Name template of the recipe
-    # Default to project name
-    name: aurl
+  - name: aurl
+    # Skip Homebrew update for pre-releases (beta versions)
+    skip_upload: auto
 
     # GitHub/GitLab repository to push the formula to
-    tap:
+    repository:
       owner: classmethod
       name: homebrew-repos
 
-    # Template for the url which is determined by the given Token (github,
-    # gitlab or gitea)
-    #
-    # Default depends on the client.
-    # url_template: "http://github.mycompany.com/foo/bar/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-
-    # Git author used to commit to the repository.
-    # Defaults are shown.
+    # Git author used to commit to the repository
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
 
-    # The project name and current git tag are used in the format string.
+    # Commit message template
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
 
-    # So you can `brew test` your formula.
-    # Default is empty.
-    test: |
-      system "#{bin}/aurl --version"
-      # ...
+    # Directory inside the repository to put the formula
+    directory: Formula
 
-    # Custom install script for brew.
-    # Default is 'bin.install "the binary name"'.
+    # Homepage of the project
+    homepage: "https://github.com/classmethod/aurl"
+
+    # Description of the project
+    description: "URL Command Line Tool with Authentication Support"
+
+    # Custom install script for brew
     install: |
       bin.install "aurl"
-      # bash_completion.install "completions/aurl.bash" => "aurl"
-      # ...
+
+    # Test script for brew
+    test: |
+      system "#{bin}/aurl --version"
