@@ -3,18 +3,14 @@ package tokens
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/classmethod/aurl/utils"
+	"github.com/zalando/go-keyring"
 )
 
-const TOKEN_STORAGE_DIR = "~/.aurl/token"
-const TOKEN_STORAGE_FORMAT = TOKEN_STORAGE_DIR + "/%s.json"
+const KEYRING_SERVICE_NAME = "aurl"
 
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
@@ -44,21 +40,16 @@ func New(tokenResponseString *string) (TokenResponse, error) {
 }
 
 func LoadTokenResponseString(profileName string) (*string, error) {
-	path := utils.ExpandPath(fmt.Sprintf(TOKEN_STORAGE_FORMAT, profileName))
-	buf, err := ioutil.ReadFile(path)
-	if err == nil {
-		s := string(buf)
-		return &s, nil
+	secret, err := keyring.Get(KEYRING_SERVICE_NAME, profileName)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return &secret, nil
 }
 
 func SaveTokenResponseString(profileName string, tokenResponseString *string) {
-	os.Mkdir(utils.ExpandPath(TOKEN_STORAGE_DIR), os.FileMode(0755))
-	path := utils.ExpandPath(fmt.Sprintf(TOKEN_STORAGE_FORMAT, profileName))
-	content := []byte(*tokenResponseString)
-	err := ioutil.WriteFile(path, content, os.FileMode(0600))
+	err := keyring.Set(KEYRING_SERVICE_NAME, profileName, *tokenResponseString)
 	if err != nil {
-		log.Printf("Failed to save token response: %v", err.Error())
+		log.Printf("Failed to save token response to keyring: %v", err.Error())
 	}
 }
