@@ -1,4 +1,5 @@
-aurl
+# aurl
+
 ====
 
 ![Release](https://github.com/classmethod/aurl/workflows/Release/badge.svg)
@@ -10,11 +11,11 @@ HTTP CLI client with OAuth 2.0 authentication.
 
 You know `curl` is powerful command line tool and you can make any complex HTTP request to every servers.
 But the target web server is secured by OAuth 2.0, you must send another HTTP request to the authorization server
-before making principal request.  And more, you should to manage issued access tokens for every resources.
+before making principal request. And more, you should to manage issued access tokens for every resources.
 
 `aurl` is a command-line tool that process OAuth 2.0 dance and manage access/refresh tokens automatically.
 
-**Note:** Currently, `aurl` is not support OAuth 1.0a.  Your pull-request is appreciated.
+**Note:** Currently, `aurl` is not support OAuth 1.0a. Your pull-request is appreciated.
 
 ## Install
 
@@ -51,21 +52,21 @@ Each section name is used as profile name.
 
 ###### SYNOPSIS
 
-Section name is utilized as profile name.  In each section following key settings are available:
+Section name is utilized as profile name. In each section following key settings are available:
 
-| key name                      | description                       | default value | available values | mandatory                       |
-| ----------------------------- | --------------------------------- |:-------------:|:----------------:|:-------------------------------:|
-| grant\_type                   | OAuth2 grant type                 | authorization_code | authorization_code, password, client_credentials | no |
-| client\_id                    | client id                         | aurl          | (any)            | no                              |
-| client_secret                 | client secret                     | aurl          | (any)            | no                              |
-| auth\_server\_auth\_endpoint  | OAuth2 authorization endpoint URI | (none)        | (any)            | YES (except for password grant) |
-| auth\_server\_token\_endpoint | OAuth2 token endpoint URI         | (none)        | (any)            | YES                             |
-| redirect                      | redirect URI                      | (none)        | (any)            | YES (except for password grant) |
-| scopes                        | space separated scope values      | read write    | (any)            | no                              |
-| username                      | username for password grant       | (none)        | (any)            | no (except for password grant)  |
-| password                      | password for password grant       | (none)        | (any)            | no (except for password grant)  |
-| default\_content\_type        | default content type header       | (none)        | (any)            | no                              |
-| default\_user\_agent          | default user agent   header       | aurl x.x.x    | (any)            | no                              |
+| key name                   | description                       |   default value    |                 available values                 |            mandatory            |
+| -------------------------- | --------------------------------- | :----------------: | :----------------------------------------------: | :-----------------------------: |
+| grant_type                 | OAuth2 grant type                 | authorization_code | authorization_code, password, client_credentials |               no                |
+| client_id                  | client id                         |        aurl        |                      (any)                       |               no                |
+| client_secret              | client secret                     |        aurl        |                      (any)                       |               no                |
+| auth_server_auth_endpoint  | OAuth2 authorization endpoint URI |       (none)       |                      (any)                       | YES (except for password grant) |
+| auth_server_token_endpoint | OAuth2 token endpoint URI         |       (none)       |                      (any)                       |               YES               |
+| redirect                   | redirect URI                      |       (none)       |                      (any)                       | YES (except for password grant) |
+| scopes                     | space separated scope values      |     read write     |                      (any)                       |               no                |
+| username                   | username for password grant       |       (none)       |                      (any)                       | no (except for password grant)  |
+| password                   | password for password grant       |       (none)       |                      (any)                       | no (except for password grant)  |
+| default_content_type       | default content type header       |       (none)       |                      (any)                       |               no                |
+| default_user_agent         | default user agent header         |     aurl x.x.x     |                      (any)                       |               no                |
 
 Implicit flow is not supported currently.
 
@@ -107,7 +108,7 @@ scopes = https://www.googleapis.com/auth/plus.login https://www.googleapis.com/a
 
 ### Token store file
 
-Token store file `~/.aurl/token/*.json` is used by aurl internally.  Retrieved token response body is stored in this file.
+Token store file `~/.aurl/token/*.json` is used by aurl internally. Retrieved token response body is stored in this file.
 You SHOULD NOT edit this file manually because this file is overwritten at any time curl is executed.
 You may lose comment and another extra data.
 
@@ -158,7 +159,7 @@ $ aurl --profile google https://www.googleapis.com/plus/v1/people/me
 }
 ```
 
-By default aurl prints response body in stdout.  When an error occured the detail is printed in stderr.
+By default aurl prints response body in stdout. When an error occured the detail is printed in stderr.
 You may want not response body but response header, then you can use `--no-print-body` and `--print-headers` option.
 
 ```bash
