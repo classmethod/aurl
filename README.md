@@ -21,9 +21,18 @@ You can install the pre-compiled binary by either following the steps.
 
 ### homebrew
 
+For stable releases:
+
 ```bash
 brew tap classmethod/repos
 brew install aurl
+```
+
+For v2 alpha releases:
+
+```bash
+# Install directly from this repository
+brew install --cask https://raw.githubusercontent.com/classmethod/aurl/master/casks/aurl@v2-alpha.rb
 ```
 
 ### scoop
