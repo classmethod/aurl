@@ -3,6 +3,7 @@ module github.com/classmethod/aurl
 go 1.19
 
 require (
+	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rakyll/goini v0.0.0-20140112234134-907cca0f578a
 	github.com/toqueteos/webbrowser v1.2.0
@@ -14,4 +15,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/term v0.9.0 // indirect
 )
