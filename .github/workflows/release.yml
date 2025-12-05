@@ -24,11 +24,33 @@ jobs:
         run: make
       - name: Test
         run: go test
-      - name: Run GoReleaser
+      - name: Determine GoReleaser config
+        id: config
+        run: |
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v2\.0\.0-alpha ]]; then
+            echo "config_file=.goreleaser.v2-alpha.yml" >> $GITHUB_OUTPUT
+            echo "release_type=alpha" >> $GITHUB_OUTPUT
+          else
+            echo "config_file=.goreleaser.yaml" >> $GITHUB_OUTPUT
+            echo "release_type=stable" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run GoReleaser (Alpha)
+        if: steps.config.outputs.release_type == 'alpha'
         uses: goreleaser/goreleaser-action@v6
         with:
           version: "~> v2"
-          args: release --clean
+          args: release --config=${{ steps.config.outputs.config_file }} --clean
+        env:
+          # set github personal access token in order to generate brew formula to external repository
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Run GoReleaser (Stable)
+        if: steps.config.outputs.release_type == 'stable'
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --config=${{ steps.config.outputs.config_file }} --clean
         env:
           # set github personal access token in order to generate brew formula to external repository
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

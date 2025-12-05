@@ -1,15 +1,12 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
+# GoReleaser configuration for alpha releases (v2.0.0-alpha.*)
+# This generates aurl-alpha formula that installs the binary as "aurl-alpha"
 
-# GoReleaser v2 configuration
 version: 2
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    # - go generate ./...
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -17,6 +14,7 @@ builds:
       - linux
       - windows
       - darwin
+
 archives:
   - name_template: >-
       {{ .ProjectName }}_
@@ -31,10 +29,10 @@ archives:
     files:
       - README.md
       - LICENSE*
+
 checksum:
   name_template: 'checksums.txt'
-snapshot:
-  version_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
   filters:
@@ -42,15 +40,10 @@ changelog:
       - '^docs:'
       - '^test:'
 
-# modelines, feel free to remove those if you don't want/use them:
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
-
 brews:
-  - name: aurl
-    # Skip Homebrew update for pre-releases (beta versions)
-    # This ensures only stable releases (v1.x.y, v2.0.0) are published
-    skip_upload: auto
+  - name: aurl-alpha
+    # Always upload alpha releases
+    skip_upload: false
 
     # GitHub/GitLab repository to push the formula to
     repository:
@@ -63,7 +56,7 @@ brews:
       email: bot@goreleaser.com
 
     # Commit message template
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} alpha version {{ .Tag }}"
 
     # Directory inside the repository to put the formula
     directory: Formula
@@ -72,17 +65,20 @@ brews:
     homepage: "https://github.com/classmethod/aurl"
 
     # Description of the project
-    # This will serve v1.x.y now, and v2.0.0+ when stable
-    description: "URL Command Line Tool with Authentication Support"
+    description: "URL Command Line Tool with Authentication Support (v2 alpha build)"
 
-    # Custom install script for brew
+    # Install binary with alpha suffix to avoid conflicts
     install: |
-      bin.install "aurl"
+      bin.install "aurl" => "aurl-alpha"
 
     # Test script for brew
     test: |
-      system "#{bin}/aurl --version"
+      system "#{bin}/aurl-alpha --version"
 
     # Add conflicts_with to prevent installing both stable and alpha
     custom_block: |
-      conflicts_with "aurl-alpha", because: "both install 'aurl' binary"
+      conflicts_with "aurl", because: "both install similar binaries"
+
+# modelines, feel free to remove those if you don't want/use them:
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj

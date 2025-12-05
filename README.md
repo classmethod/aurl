@@ -21,22 +21,26 @@ You can install the pre-compiled binary by either following the steps.
 
 ### homebrew
 
-For stable releases:
+**Stable version (v1.x - recommended for most users):**
 
 ```bash
 brew tap classmethod/repos
 brew install aurl
 ```
 
-For v2 alpha releases:
+**Alpha version (v2.0.0-alpha - for early testers):**
 
 ```bash
-# macOS: Use Cask (precompiled binary)
-brew install --cask https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/casks/aurl-v2-alpha.rb
-
-# Linux: Use Formula (precompiled binary)
-brew install https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/Formula/aurl-v2-alpha.rb
+brew tap classmethod/repos
+brew install aurl-alpha
 ```
+
+**Notes:**
+
+- `aurl` and `aurl-alpha` cannot be installed simultaneously (they conflict)
+- The alpha version installs the binary as `aurl-alpha` to allow side-by-side testing
+- When v2 becomes stable, `brew upgrade aurl` will seamlessly migrate you from v1 to v2
+- To switch from alpha to stable: `brew uninstall aurl-alpha && brew install aurl`
 
 ### scoop
 
