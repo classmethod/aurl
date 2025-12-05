@@ -31,8 +31,11 @@ brew install aurl
 For v2 alpha releases:
 
 ```bash
-# Install directly from this repository
-brew install --cask https://raw.githubusercontent.com/classmethod/aurl/master/casks/aurl@v2-alpha.rb
+# macOS: Use Cask (precompiled binary)
+brew install --cask https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/casks/aurl-v2-alpha.rb
+
+# Linux: Use Formula (precompiled binary)
+brew install https://raw.githubusercontent.com/classmethod/aurl/master/prerelease/formula/aurl-v2-alpha.rb
 ```
 
 ### scoop
