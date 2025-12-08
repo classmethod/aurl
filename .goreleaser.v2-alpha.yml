@@ -1,5 +1,5 @@
 # GoReleaser configuration for alpha releases (v2.0.0-alpha.*)
-# This generates aurl-alpha formula that installs the binary as "aurl-alpha"
+# This generates aurl-v2-alpha formula that installs the binary as "aurl-v2-alpha"
 
 version: 2
 
@@ -41,7 +41,7 @@ changelog:
       - '^test:'
 
 brews:
-  - name: aurl-alpha
+  - name: aurl-v2-alpha
     # Always upload alpha releases
     skip_upload: false
 
@@ -67,13 +67,13 @@ brews:
     # Description of the project
     description: "URL Command Line Tool with Authentication Support (v2 alpha build)"
 
-    # Install binary with alpha suffix to avoid conflicts
+    # Install binary with v2-alpha suffix to avoid conflicts
     install: |
-      bin.install "aurl" => "aurl-alpha"
+      bin.install "aurl" => "aurl-v2-alpha"
 
     # Test script for brew
     test: |
-      system "#{bin}/aurl-alpha --version"
+      system "#{bin}/aurl-v2-alpha --version"
 
     # Add conflicts_with to prevent installing both stable and alpha
     custom_block: |

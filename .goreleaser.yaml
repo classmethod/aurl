@@ -85,4 +85,4 @@ brews:
 
     # Add conflicts_with to prevent installing both stable and alpha
     custom_block: |
-      conflicts_with "aurl-alpha", because: "both install 'aurl' binary"
+      conflicts_with "aurl-v2-alpha", because: "both install 'aurl' binary"

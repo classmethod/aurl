@@ -32,15 +32,15 @@ brew install aurl
 
 ```bash
 brew tap classmethod/repos
-brew install aurl-alpha
+brew install aurl-v2-alpha
 ```
 
 **Notes:**
 
-- `aurl` and `aurl-alpha` cannot be installed simultaneously (they conflict)
-- The alpha version installs the binary as `aurl-alpha` to allow side-by-side testing
+- `aurl` and `aurl-v2-alpha` cannot be installed simultaneously (they conflict)
+- The alpha version installs the binary as `aurl-v2-alpha` to allow side-by-side testing
 - When v2 becomes stable, `brew upgrade aurl` will seamlessly migrate you from v1 to v2
-- To switch from alpha to stable: `brew uninstall aurl-alpha && brew install aurl`
+- To switch from alpha to stable: `brew uninstall aurl-v2-alpha && brew install aurl`
 
 ### scoop
 
