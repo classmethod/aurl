@@ -15,19 +15,22 @@ import (
 
 	"github.com/classmethod/aurl/profiles"
 	"github.com/classmethod/aurl/tokens"
+	"github.com/howeyc/gopass"
 )
 
 type AurlExecution struct {
 	Name    string
 	Version string
 
-	Profile      profiles.Profile
-	Method       *string
-	Headers      *http.Header
-	Data         *string
-	Insecure     *bool
-	PrintBody    *bool
-	PrintHeaders *bool
+	Profile            profiles.Profile
+	Method             *string
+	Headers            *http.Header
+	Data               *string
+	Insecure           *bool
+	PrintBody          *bool
+	PrintHeaders       *bool
+	PromptClientSecret *bool
+	PromptPassword     *bool
 
 	TargetUrl *string
 }
@@ -112,6 +115,22 @@ func (execution *AurlExecution) refresh(tokenResponse tokens.TokenResponse) (*st
 }
 
 func (execution *AurlExecution) grant() (*string, error) {
+	if *execution.PromptClientSecret {
+		clientSecret, err := gopass.GetPasswdPrompt("Enter client secret: ", true, os.Stdin, os.Stderr)
+		if err != nil {
+			return nil, err
+		}
+		execution.Profile.ClientSecret = string(clientSecret)
+	}
+
+	if *execution.PromptPassword {
+		password, err := gopass.GetPasswdPrompt("Enter password: ", true, os.Stdin, os.Stderr)
+		if err != nil {
+			return nil, err
+		}
+		execution.Profile.Password = string(password)
+	}
+
 	switch execution.Profile.GrantType {
 	case "authorization_code":
 		return authCodeGrant(execution)
