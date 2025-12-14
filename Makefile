@@ -20,6 +20,14 @@ deps:
 build:
 	go build $(LDFLAGS) -o bin/$(NAME)
 
+.PHONY: lint
+lint:
+	golangci-lint run ./...
+
+.PHONY: fmt
+fmt:
+	gofmt -s -w .
+
 .PHONY: test
 test:
 	go test -v $(GOPACKAGES)

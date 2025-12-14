@@ -12,18 +12,21 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/classmethod/aurl/profiles"
-	"github.com/classmethod/aurl/tokens"
+	"github.com/byteness/keyring"
+	"github.com/classmethod/aurl/vault"
 )
 
-type AurlExecution struct {
+type Request struct {
 	Name    string
 	Version string
 
-	Profile      profiles.Profile
+	Config       *vault.Config
+	Credentials  *vault.Credentials
+	TokenInfo    *vault.TokenInfo
 	Method       *string
-	Headers      *http.Header
+	Headers      *[]string
 	Data         *string
 	Insecure     *bool
 	PrintBody    *bool
@@ -32,119 +35,102 @@ type AurlExecution struct {
 	TargetUrl *string
 }
 
-func (execution *AurlExecution) Execute() error {
-	log.Printf("Profile = %v", execution.Profile)
+func (r *Request) Execute(keyring keyring.Keyring) (err error) {
+	log.Printf("Profile = %v", r.Config)
+	if r.TokenInfo == nil || r.TokenInfo.Tokens.AccessToken == "" || r.TokenInfo.IsExpired() {
+		var tokenResponse *OAuth2TokenResponse
 
-	if tokenResponseString, err := tokens.LoadTokenResponseString(execution.Profile.Name); err == nil {
-		log.Printf("Stored token response was found: >>>\n%v\n<<<", *tokenResponseString)
-		if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
-			log.Printf("Stored access token: %v", tokenResponse.AccessToken)
-			if tokenResponse.IsExpired() == false {
-				response, err := execution.doRequest(tokenResponse, execution.Profile)
-				if err == nil {
-					log.Printf("Stored access token was valid")
-					execution.doPrint(response)
-					return nil
-				} else {
-					log.Printf("Stored access token was invalid: %v", err.Error())
-				}
-			} else {
-				log.Printf("Stored access token was expired")
-			}
-			if tokenResponse.RefreshToken != "" {
-				log.Printf("Stored refresh token: %v", tokenResponse.RefreshToken)
-				if tokenResponseString, err = execution.refresh(tokenResponse); err == nil {
-					if tokenResponseString != nil {
-						log.Printf("Refreshed token response: >>>\n%v\n<<<", *tokenResponseString)
-					}
-					if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
-						if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
-							log.Printf("Refreshed access token was valid")
-							execution.doPrint(response)
-							tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
-							return nil
-						} else {
-							log.Printf("Refreshed access token was invalid: %v", err.Error())
-						}
-					} else {
-						log.Printf("Failed to parse refreshed token response: %v", err.Error())
-					}
-				} else {
-					log.Printf("Stored refresh token was invalid: %v", err.Error())
-				}
-			} else {
-				log.Printf("Stored refresh token was not found")
+		if r.TokenInfo != nil && r.TokenInfo.Tokens != nil && r.TokenInfo.Tokens.RefreshToken != "" {
+			log.Printf("Access token is missing or expired, try to refresh using refresh token")
+			if tokenResponse, err = r.refresh(); err != nil {
+				log.Printf("Token refresh failed: %v", err)
 			}
 		} else {
-			log.Printf("Failed to parse stored token response: %v", err.Error())
-		}
-	} else {
-		log.Printf("Stored access token was not found: %v", err.Error())
-	}
-
-	if tokenResponseString, err := execution.grant(); err == nil {
-		if tokenResponseString != nil {
-			log.Printf("Issued token response: >>>\n%v\n<<<", *tokenResponseString)
-		}
-		if tokenResponse, err := tokens.New(tokenResponseString); err == nil {
-			log.Printf("Issued access token: %v", tokenResponse.AccessToken)
-			if response, err := execution.doRequest(tokenResponse, execution.Profile); err == nil {
-				log.Printf("Issued access token was valid")
-				execution.doPrint(response)
-				tokens.SaveTokenResponseString(execution.Profile.Name, tokenResponseString)
-				return nil
-			} else {
-				log.Printf("Granted access token was invalid: %v", err.Error())
+			log.Printf("Access token is missing or expired, perform full grant flow")
+			if tokenResponse, err = r.grant(); err != nil {
 				return err
 			}
-		} else {
-			log.Printf("Failed to parse granted token response: %v", err.Error())
-			return err
 		}
-	} else {
-		log.Printf("Grant failed: %v", err.Error())
+
+		log.Printf("Obtained tokens: %v", tokenResponse)
+		r.TokenInfo = &vault.TokenInfo{
+			RequestTimestamp: time.Now().Unix(),
+			Tokens: &vault.Tokens{
+				AccessToken:  tokenResponse.AccessToken,
+				RefreshToken: tokenResponse.RefreshToken,
+				TokenType:    tokenResponse.TokenType,
+				ExpiresIn:    tokenResponse.ExpiresIn,
+				Scope:        tokenResponse.Scope,
+				IdToken:      tokenResponse.IdToken,
+			},
+		}
+
+		// Save tokens to keyring
+		tkr := &vault.TokenKeyring{Keyring: keyring}
+		if err := tkr.Set(r.Name, r.TokenInfo); err != nil {
+			log.Printf("Failed to save tokens to keyring: %v", err)
+		} else {
+			log.Printf("Tokens saved to keyring")
+		}
+	}
+
+	response, err := r.doRequest()
+	if err != nil {
+		log.Printf("Request failed: %v", err)
 		return err
 	}
+
+	r.doPrint(response)
+	return nil
 }
 
-func (execution *AurlExecution) refresh(tokenResponse tokens.TokenResponse) (*string, error) {
-	return refreshGrant(execution, tokenResponse.RefreshToken)
+func (r *Request) refresh() (*OAuth2TokenResponse, error) {
+	return refreshGrant(r.Config, r.Credentials, r.TokenInfo.Tokens.RefreshToken, *r.Insecure)
 }
 
-func (execution *AurlExecution) grant() (*string, error) {
-	switch execution.Profile.GrantType {
+func (r *Request) grant() (*OAuth2TokenResponse, error) {
+	switch r.Config.GrantType {
 	case "authorization_code":
-		return authCodeGrant(execution)
+		return authCodeGrant(r.Config, r.Credentials, *r.Insecure)
 	case "implicit":
-		return implicitGrant(execution)
+		// TODO: not enough checked yet
+		return implicitGrant(r.Config, r.Credentials, *r.Insecure)
 	case "password":
-		return resourceOwnerPasswordCredentialsGrant(execution)
+		// TODO: not enough checked yet
+		return resourceOwnerPasswordCredentialsGrant(r.Config, r.Credentials, *r.Insecure)
 	case "client_credentials":
-		return clientCredentialsGrant(execution)
+		return clientCredentialsGrant(r.Config, r.Credentials, *r.Insecure)
 	default:
-		return nil, errors.New("Unknown grant type: " + execution.Profile.GrantType)
+		return nil, errors.New("Unknown grant type: " + r.Config.GrantType)
 	}
 }
 
-func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, profile profiles.Profile) (*http.Response, error) {
-	body := strings.NewReader(*execution.Data)
-	req, err := http.NewRequest(*execution.Method, *execution.TargetUrl, body)
+func (r *Request) doRequest() (*http.Response, error) {
+	body := strings.NewReader(*r.Data)
+	httpReq, err := http.NewRequest(*r.Method, *r.TargetUrl, body)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = *execution.Headers
-
-	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", profile.UserAgent)
+	// Initialize Headers from string slice
+	httpReq.Header = http.Header{}
+	for _, header := range *r.Headers {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 2 {
+			httpReq.Header.Add(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
+		}
 	}
 
-	if req.Header.Get("Content-Type") == "" {
-		req.Header.Set("Content-Type", profile.DefaultContentType)
+	if httpReq.Header.Get("User-Agent") == "" {
+		httpReq.Header.Set("User-Agent", r.Config.UserAgent)
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResponse.AccessToken))
 
-	if dumpReq, err := httputil.DumpRequestOut(req, true); err == nil {
+	if httpReq.Header.Get("Content-Type") == "" {
+		httpReq.Header.Set("Content-Type", r.Config.ContentType)
+	}
+	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.TokenInfo.Tokens.AccessToken))
+
+	if dumpReq, err := httputil.DumpRequestOut(httpReq, true); err == nil {
 		log.Printf("Dominant request >>>\n%s\n<<<", string(dumpReq))
 	} else {
 		log.Printf("Dominant request dump failed: %v", err)
@@ -153,14 +139,21 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 	client := &http.Client{
 		CheckRedirect: func(redirectRequest *http.Request, via []*http.Request) error {
 			log.Printf("Redirect to %s", redirectRequest.URL.String())
-			log.Printf("Original request Host = %s", req.URL.String())
-			redirectRequest.Header = *execution.Headers
-			if redirectRequest.Header.Get("User-Agent") == "" {
-				redirectRequest.Header.Set("User-Agent", profile.UserAgent)
+			log.Printf("Original request Host = %s", httpReq.URL.String())
+			// Initialize Headers from string slice
+			redirectRequest.Header = http.Header{}
+			for _, header := range *r.Headers {
+				parts := strings.SplitN(header, ":", 2)
+				if len(parts) == 2 {
+					redirectRequest.Header.Add(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
+				}
 			}
-			if matchServer(redirectRequest.URL, req.URL) {
+			if redirectRequest.Header.Get("User-Agent") == "" {
+				redirectRequest.Header.Set("User-Agent", r.Config.UserAgent)
+			}
+			if matchServer(redirectRequest.URL, httpReq.URL) {
 				log.Printf("Propagate authorization header")
-				redirectRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResponse.AccessToken))
+				redirectRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.TokenInfo.Tokens.AccessToken))
 				return nil
 			} else {
 				return errors.New("Redirect to non-same origin resource server")
@@ -168,11 +161,11 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 		},
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: *execution.Insecure,
+				InsecureSkipVerify: *r.Insecure,
 			},
 		},
 	}
-	resp, err := client.Do(req)
+	resp, err := client.Do(httpReq)
 	if err != nil {
 		log.Printf("Dominant request failed")
 		return resp, err
@@ -192,11 +185,11 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 	}
 }
 
-func (execution *AurlExecution) doPrint(response *http.Response) {
+func (r *Request) doPrint(response *http.Response) {
 	if response == nil {
 		return
 	}
-	if *execution.PrintHeaders {
+	if *r.PrintHeaders {
 		log.Println("Printing headers")
 		headers, err := json.Marshal(response.Header)
 		if err == nil {
@@ -210,7 +203,7 @@ func (execution *AurlExecution) doPrint(response *http.Response) {
 		log.Println("No printing headers")
 	}
 
-	if *execution.PrintBody {
+	if *r.PrintBody {
 		log.Println("Printing body")
 		_, err := io.Copy(os.Stdout, response.Body)
 		if err != nil {
