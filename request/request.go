@@ -167,6 +167,7 @@ func (execution *AurlExecution) doRequest(tokenResponse tokens.TokenResponse, pr
 			}
 		},
 		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: *execution.Insecure,
 			},
