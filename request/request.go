@@ -160,6 +160,7 @@ func (r *Request) doRequest() (*http.Response, error) {
 			}
 		},
 		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: *r.Insecure,
 			},

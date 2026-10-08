@@ -153,6 +153,7 @@ func tokenRequest(v url.Values, tokenEndpoint, clientId, clientSecret, userAgent
 
 	client := &http.Client{
 		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: insecure,
 			},
