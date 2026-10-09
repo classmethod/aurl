@@ -30,7 +30,7 @@ fmt:
 
 .PHONY: test
 test:
-	go test -v $(GOPACKAGES)
+	go test -v ./...
 
 .PHONY: gorelease
 gorelease:

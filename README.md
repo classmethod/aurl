@@ -126,6 +126,34 @@ Token store file `~/.aurl/token/*.json` is used by aurl internally. Retrieved to
 You SHOULD NOT edit this file manually because this file is overwritten at any time curl is executed.
 You may lose comment and another extra data.
 
+### 1Password backend
+
+Secrets can be stored in 1Password by selecting a backend with `--backend`.
+
+| backend      | description                                  | required settings                                                         |
+| ------------ | -------------------------------------------- | ------------------------------------------------------------------------- |
+| `op`         | 1Password Service Account                    | `--op-vault-id`, `AURL_OP_SERVICE_ACCOUNT_TOKEN` (prompted if not set)    |
+| `op-connect` | 1Password Connect server                     | `--op-vault-id`, `--op-connect-host`, `AURL_OP_CONNECT_TOKEN` (prompted if not set) |
+| `op-desktop` | 1Password desktop app integration            | `--op-vault-id`, `--op-desktop-account-id`                                |
+
+| flag                      | environment variable         | description                                               |
+| ------------------------- | ---------------------------- | --------------------------------------------------------- |
+| `--op-vault-id`           | `AURL_OP_VAULT_ID`           | UUID of the 1Password vault                               |
+| `--op-connect-host`       | `AURL_OP_CONNECT_HOST`       | 1Password Connect server HTTP(S) URI                      |
+| `--op-desktop-account-id` | `AURL_OP_DESKTOP_ACCOUNT_ID` | 1Password account name or UUID for the desktop app        |
+| `--op-timeout`            | `AURL_OP_TIMEOUT`            | Timeout for 1Password API operations (default: `15s`)     |
+
+Items are created with the title prefix `aurl` and the tag `aurl`.
+
+To use `op-desktop`, enable "Integrate with other apps" in the Developer settings of the 1Password app.
+`op-desktop` is not available in the pre-compiled Linux binaries because they are built without cgo.
+
+```bash
+$ export AURL_OP_VAULT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+$ export AURL_OP_DESKTOP_ACCOUNT_ID=my.1password.com
+$ aurl --backend op-desktop exec default https://api.example.com/path/to/resource
+```
+
 ### Execution
 
 ###### SYNOPSIS

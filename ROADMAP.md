@@ -46,9 +46,12 @@ Release strategy and branch policy for aurl (as of 2026-10).
 ### TODO before the v2 release
 
 1. Fix the build
-   - [ ] With `CGO_ENABLED=0`, the build fails on all OSes because of the 1Password SDK (`onepassword-sdk-go`).
-   - [ ] CI still uses Go 1.19 (go.mod requires 1.25).
-   - [ ] The macOS keychain backend requires cgo (`//go:build darwin && cgo`), so the current macOS build cannot use the keychain.
+   - [x] With `CGO_ENABLED=0`, the build fails on all OSes because of the 1Password SDK (`onepassword-sdk-go`).
+     - Fixed by upgrading `byteness/keyring` to v1.13.2 (`onepassword-sdk-go` v0.4.1, Go 1.26).
+   - [x] CI still uses Go 1.19 (go.mod requires 1.25).
+     - CI now uses `go-version-file: go.mod`.
+   - [x] The macOS keychain backend requires cgo (`//go:build darwin && cgo`), so the current macOS build cannot use the keychain.
+     - Releases run on a macOS runner and build darwin with `CGO_ENABLED=1` (linux/windows stay `CGO_ENABLED=0`).
 2. Migration support
    - [ ] `aurl migrate`: read `~/.aurl/profiles`, write settings to `~/.aurl/config` and secrets to the keyring. Apply v1 defaults and handle renamed keys. Leave the v1 file untouched.
    - [ ] When invoked in v1 style (`-p` or `aurl <url>`), point users to `aurl exec` / `aurl migrate`.

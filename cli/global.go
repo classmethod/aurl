@@ -7,6 +7,7 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/byteness/keyring"
+	"github.com/classmethod/aurl/util"
 	"github.com/classmethod/aurl/vault"
 )
 
@@ -25,6 +26,11 @@ var keyringConfigDefaults = keyring.Config{
 	KWalletFolder:            "aurl",
 	WinCredPrefix:            "aurl",
 	KeychainTrustApplication: true,
+	OPItemTitlePrefix:        "aurl",
+	OPItemTag:                "aurl",
+	OPTokenEnv:               "AURL_OP_SERVICE_ACCOUNT_TOKEN",
+	OPConnectTokenEnv:        "AURL_OP_CONNECT_TOKEN",
+	OPTokenFunc:              util.TerminalSecretPrompt,
 }
 
 func (a *Aurl) Keyring() (keyring.Keyring, error) {
@@ -79,6 +85,23 @@ func ConfigureGlobals(app *kingpin.Application) *Aurl {
 	app.Flag("backend", fmt.Sprintf("Secret backend to use %v", backendsAvailable)).
 		Default(backendsAvailable[0]).
 		EnumVar(&a.KeyringBackend, backendsAvailable...)
+
+	app.Flag("op-timeout", "Timeout for 1Password API operations (op / op-desktop only)").
+		Default("15s").
+		Envar("AURL_OP_TIMEOUT").
+		DurationVar(&a.KeyringConfig.OPTimeout)
+
+	app.Flag("op-vault-id", "UUID of the 1Password vault").
+		Envar("AURL_OP_VAULT_ID").
+		StringVar(&a.KeyringConfig.OPVaultID)
+
+	app.Flag("op-desktop-account-id", "1Password account name or UUID for the desktop app integration").
+		Envar("AURL_OP_DESKTOP_ACCOUNT_ID").
+		StringVar(&a.KeyringConfig.OPDesktopAccountID)
+
+	app.Flag("op-connect-host", "1Password Connect server HTTP(S) URI").
+		Envar("AURL_OP_CONNECT_HOST").
+		StringVar(&a.KeyringConfig.OPConnectHost)
 
 	app.PreAction(func(c *kingpin.ParseContext) error {
 		if a.Verbose {

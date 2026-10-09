@@ -8,12 +8,17 @@ before:
     - go mod tidy
 
 builds:
-  - env:
+  - id: darwin
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    env:
+      - CGO_ENABLED=1
+      # cgo links via clang; without this, minos defaults to the runner's macOS version
+      - MACOSX_DEPLOYMENT_TARGET=12.0
+  - id: others
+    goos: [linux, windows]
+    env:
       - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
 
 archives:
   - name_template: >-
