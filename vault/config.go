@@ -134,19 +134,12 @@ func (c *ConfigFile) ProfileSections() []ProfileSection {
 		return result
 	}
 	for _, section := range c.iniFile.SectionStrings() {
-		if section == defaultSectionName {
-			profile, _ := c.ProfileSection(section)
-
-			// ignore the default profile if it's empty
-			if section == defaultSectionName && profile.IsEmpty() {
-				continue
-			}
-
-			result = append(result, profile)
-		} else {
-			log.Printf("Unrecognised ini file section: %s", section)
+		profile, _ := c.ProfileSection(section)
+		// ini always has an implicit "DEFAULT" section, usually empty
+		if profile.IsEmpty() {
 			continue
 		}
+		result = append(result, profile)
 	}
 
 	return result

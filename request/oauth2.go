@@ -43,7 +43,7 @@ func authCodeGrant(config *vault.Config, credentials *vault.Credentials, insecur
 		log.Printf("Failed to open browser: %v", err)
 	}
 
-	code, err := util.TerminalPrompt("Enter Grant Type: ")
+	code, err := util.TerminalPrompt("Enter Authorization Code: ")
 	if err != nil {
 		return nil, err
 	}
