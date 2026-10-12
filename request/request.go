@@ -37,15 +37,20 @@ type Request struct {
 
 func (r *Request) Execute(keyring keyring.Keyring) (err error) {
 	log.Printf("Profile = %v", r.Config)
-	if r.TokenInfo == nil || r.TokenInfo.Tokens.AccessToken == "" || r.TokenInfo.IsExpired() {
+	if r.TokenInfo == nil || r.TokenInfo.Tokens == nil || r.TokenInfo.Tokens.AccessToken == "" || r.TokenInfo.IsExpired() {
 		var tokenResponse *OAuth2TokenResponse
 
 		if r.TokenInfo != nil && r.TokenInfo.Tokens != nil && r.TokenInfo.Tokens.RefreshToken != "" {
 			log.Printf("Access token is missing or expired, try to refresh using refresh token")
 			if tokenResponse, err = r.refresh(); err != nil {
-				log.Printf("Token refresh failed: %v", err)
+				log.Printf("Token refresh failed, falling back to full grant flow: %v", err)
+				tokenResponse = nil
+			} else if tokenResponse.RefreshToken == "" {
+				// RFC 6749 section 6: the server may omit a new refresh token, so keep the old one.
+				tokenResponse.RefreshToken = r.TokenInfo.Tokens.RefreshToken
 			}
-		} else {
+		}
+		if tokenResponse == nil {
 			log.Printf("Access token is missing or expired, perform full grant flow")
 			if tokenResponse, err = r.grant(); err != nil {
 				return err
