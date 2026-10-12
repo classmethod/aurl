@@ -130,12 +130,6 @@ func AddCommand(input AddCommandInput, keyring keyring.Keyring, aurlConfigFile *
 		Username:     username,
 		Password:     password,
 	}
-	ckr := &vault.CredentialKeyring{Keyring: keyring}
-	if err := ckr.Set(input.ProfileName, creds); err != nil {
-		return fmt.Errorf("Error storing credentials in keyring: %w", err)
-	}
-	fmt.Printf("Added credentials to profile %q in vault\n", input.ProfileName)
-
 	newProfileSection := vault.ProfileSection{
 		Name:                    input.ProfileName,
 		GrantType:               grantType,
@@ -146,15 +140,28 @@ func AddCommand(input AddCommandInput, keyring keyring.Keyring, aurlConfigFile *
 		ContentType:             contentType,
 		UserAgent:               userAgent,
 	}
-	log.Printf("Adding profile %s to config at %s", input.ProfileName, aurlConfigFile.Path)
-	if err := aurlConfigFile.Add(newProfileSection); err != nil {
+	if err := saveProfile(keyring, aurlConfigFile, newProfileSection, creds); err != nil {
+		return err
+	}
+	fmt.Printf("Added credentials to profile %q in vault\n", input.ProfileName)
+	return nil
+}
+
+func saveProfile(keyring keyring.Keyring, aurlConfigFile *vault.ConfigFile, section vault.ProfileSection, creds vault.Credentials) error {
+	ckr := &vault.CredentialKeyring{Keyring: keyring}
+	if err := ckr.Set(section.Name, creds); err != nil {
+		return fmt.Errorf("Error storing credentials in keyring: %w", err)
+	}
+
+	log.Printf("Adding profile %s to config at %s", section.Name, aurlConfigFile.Path)
+	if err := aurlConfigFile.Add(section); err != nil {
 		return fmt.Errorf("Error adding profile: %w", err)
 	}
 
 	// Remove any existing tokens for the profile
 	tkr := &vault.TokenKeyring{Keyring: keyring}
-	if err := tkr.Remove(input.ProfileName); err != nil {
-		fmt.Printf("Warning: Failed to remove existing token for profile %q: %v\n", input.ProfileName, err)
+	if err := tkr.Remove(section.Name); err != nil {
+		fmt.Printf("Warning: Failed to remove existing token for profile %q: %v\n", section.Name, err)
 	}
 
 	return nil

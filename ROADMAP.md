@@ -53,14 +53,17 @@ Release strategy and branch policy for aurl (as of 2026-10).
    - [x] The macOS keychain backend requires cgo (`//go:build darwin && cgo`), so the current macOS build cannot use the keychain.
      - Releases run on a macOS runner and build darwin with `CGO_ENABLED=1` (linux/windows stay `CGO_ENABLED=0`).
 2. Migration support
-   - [ ] `aurl migrate`: read `~/.aurl/profiles`, write settings to `~/.aurl/config` and secrets to the keyring. Apply v1 defaults and handle renamed keys. Leave the v1 file untouched.
-   - [ ] When invoked in v1 style (`-p` or `aurl <url>`), point users to `aurl exec` / `aurl migrate`.
-   - [ ] When `exec` cannot find the profile and `~/.aurl/profiles` exists, suggest `aurl migrate`.
+   - [x] `aurl migrate`: read `~/.aurl/profiles`, write settings to `~/.aurl/config` and secrets to the keyring. Apply v1 defaults and handle renamed keys. Leave the v1 file untouched.
+   - [x] When invoked in v1 style (`-p` or `aurl <url>`), point users to `aurl exec` / `aurl migrate`.
+   - [x] When `exec` cannot find the profile and it exists in `~/.aurl/profiles`, suggest `aurl migrate`.
    - [ ] Use brew caveats to announce the breaking changes, `aurl migrate`, and `aurl-v1`.
    - [ ] Rewrite the README for v2 and add a migration guide.
 3. Other
    - [ ] `vault.ConfigFile.ProfileSections()` drops every section except `default` (affects shell completion).
-   - [ ] Check whether the alpha (zalando/go-keyring) and v2 (byteness/keyring) read/write the same keyring item (service `aurl`, key = profile name).
+   - [x] Check whether the alpha (zalando/go-keyring) and v2 (byteness/keyring) read/write the same keyring item (service `aurl`, key = profile name).
+     - macOS: same item (generic password, service `aurl`, account = profile name). The alpha stores token JSON there and v2 stores credentials JSON, so `aurl add` / `aurl migrate` overwrite the alpha token (harmless since v2 requires re-authentication, but the item was created by `/usr/bin/security`, so a keychain access prompt may appear).
+     - Windows: different items (alpha `aurl:<profile>`, v2 `aurl:aurl:<profile>`).
+     - Linux: different items (alpha uses the login collection, v2 the `aurl` collection).
 4. Release
    - [ ] Release an alpha from `master` and let alpha users try the migration → freeze `v2-alpha-maintenance`.
    - [ ] Change the release config on `v1-maintenance` to publish brew `aurl-v1`. (It currently publishes brew `aurl`; tagging v1 after the v2 release would revert `aurl` to v1.)

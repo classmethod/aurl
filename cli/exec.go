@@ -82,6 +82,9 @@ func ExecCommand(input ExecCommandInput, keyring keyring.Keyring, aurlConfigFile
 
 	config, err := vault.NewConfigLoader(aurlConfigFile, input.ProfileName).GetProfileConfig(input.ProfileName)
 	if err != nil {
+		if inV1Profiles(input.ProfileName) {
+			return fmt.Errorf("Error loading config: %w\nProfile %q was found in ~/.aurl/profiles (aurl v1). Run `aurl migrate` to import it.", err, input.ProfileName)
+		}
 		return fmt.Errorf("Error loading config: %w", err)
 	}
 

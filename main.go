@@ -22,6 +22,19 @@ func main() {
 	a := cli.ConfigureGlobals(app)
 	cli.ConfigureAddCommand(app, a)
 	cli.ConfigureExecCommand(app, a)
+	cli.ConfigureMigrateCommand(app, a)
 
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	command, err := app.Parse(os.Args[1:])
+	if err != nil && cli.IsV1Style(os.Args[1:]) {
+		app.Errorf("%s", err)
+		fmt.Fprint(os.Stderr, v1StyleNotice)
+		os.Exit(1)
+	}
+	kingpin.MustParse(command, err)
 }
+
+const v1StyleNotice = `aurl v2 changed the command line syntax.
+  v1: aurl [-p profile] <url>
+  v2: aurl exec <profile> <url>
+To migrate ~/.aurl/profiles to v2, run: aurl migrate
+`

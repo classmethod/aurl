@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/byteness/aws-vault/v7 v7.8.2
 	github.com/byteness/keyring v1.13.2
+	github.com/rakyll/goini v0.0.0-20140112234134-907cca0f578a
 	github.com/toqueteos/webbrowser v1.2.1
 	gopkg.in/ini.v1 v1.67.0
 )
