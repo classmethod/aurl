@@ -1,12 +1,16 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/byteness/keyring"
 	"github.com/classmethod/aurl/request"
+	"github.com/classmethod/aurl/util"
 	"github.com/classmethod/aurl/vault"
 )
 
@@ -30,10 +34,9 @@ type ExecCommandInput struct {
 func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 	input := ExecCommandInput{}
 
-	cmd := app.Command("exec", "Execute a command with Token.")
+	cmd := app.Command("exec", "Execute a command with Token. Prompts for profile and url when omitted.")
 
 	cmd.Arg("profile", "Name of the profile to use.").
-		Required().
 		HintAction(a.MustGetProfileNames).
 		StringVar(&input.ProfileName)
 	cmd.Flag("renew-token", "Force renewal of access token even if a valid token exists in the keyring.").
@@ -60,15 +63,34 @@ func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 		BoolVar(&input.PrintHeaders)
 
 	cmd.Arg("url", "The URL to request").
-		Required().
 		StringVar(&input.TargetUrl)
 
 	cmd.Action(func(c *kingpin.ParseContext) (err error) {
-		keyring, err := a.Keyring()
+		aurlConfigFile, err := a.AurlConfigFile()
 		if err != nil {
 			return err
 		}
-		aurlConfigFile, err := a.AurlConfigFile()
+
+		if input.ProfileName == "" {
+			if input.ProfileName, err = selectProfile(aurlConfigFile.ProfileNames(), aurlConfigFile.Path); err != nil {
+				return err
+			}
+		}
+		if input.TargetUrl == "" {
+			// Catches `aurl exec <url>` (url parsed as profile) before asking for a URL
+			if _, ok := aurlConfigFile.ProfileSection(input.ProfileName); !ok {
+				return fmt.Errorf("Profile '%s' not found in config file", input.ProfileName)
+			}
+			if input.TargetUrl, err = util.TerminalPrompt("Enter URL (or path when base_url is set): "); err != nil {
+				return err
+			}
+			if input.TargetUrl == "" {
+				return errors.New("URL is required")
+			}
+		}
+
+		// Opened after the prompts so op backends do not ask for a token first
+		keyring, err := a.Keyring()
 		if err != nil {
 			return err
 		}
@@ -76,6 +98,24 @@ func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 		kingpin.FatalIfError(ExecCommand(input, keyring, aurlConfigFile), "exec")
 		return nil
 	})
+}
+
+func selectProfile(names []string, configPath string) (string, error) {
+	if len(names) == 0 {
+		if hasV1Profiles() {
+			return "", fmt.Errorf("Config file %s has no profiles, but the aurl v1 profiles file ~/.aurl/profiles has some. Run `aurl migrate` to import them.", configPath)
+		}
+		return "", fmt.Errorf("Config file %s has no profiles. Run `aurl add` to create one.", configPath)
+	}
+	return selectFromList("Select profile:", names)
+}
+
+func parseProfileChoice(names []string, answer string) (string, error) {
+	n, err := strconv.Atoi(answer)
+	if err != nil || n < 1 || n > len(names) {
+		return "", fmt.Errorf("invalid number %q: choose 1-%d", answer, len(names))
+	}
+	return names[n-1], nil
 }
 
 func ExecCommand(input ExecCommandInput, keyring keyring.Keyring, aurlConfigFile *vault.ConfigFile) (err error) {
@@ -86,6 +126,9 @@ func ExecCommand(input ExecCommandInput, keyring keyring.Keyring, aurlConfigFile
 			return fmt.Errorf("Error loading config: %w\nProfile %q was found in ~/.aurl/profiles (aurl v1). Run `aurl migrate` to import it.", err, input.ProfileName)
 		}
 		return fmt.Errorf("Error loading config: %w", err)
+	}
+	if input.TargetUrl, err = resolveURL(config.BaseURL, input.TargetUrl); err != nil {
+		return err
 	}
 
 	ckr := &vault.CredentialKeyring{Keyring: keyring}
@@ -122,4 +165,15 @@ func ExecCommand(input ExecCommandInput, keyring keyring.Keyring, aurlConfigFile
 	kingpin.FatalIfError(execution.Execute(keyring), "Request failed")
 
 	return nil
+}
+
+func resolveURL(baseURL, target string) (string, error) {
+	lower := strings.ToLower(target)
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		return target, nil
+	}
+	if baseURL == "" {
+		return "", fmt.Errorf("relative URL %q requires base_url in the profile", target)
+	}
+	return strings.TrimRight(baseURL, "/") + "/" + strings.TrimLeft(target, "/"), nil
 }

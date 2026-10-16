@@ -142,6 +142,23 @@ func inV1Profiles(name string) bool {
 	return ok
 }
 
+func hasV1Profiles() bool {
+	path, err := v1ProfilesPath()
+	if err != nil {
+		return false
+	}
+	v1, err := goini.Load(path)
+	if err != nil {
+		return false
+	}
+	for name := range v1 {
+		if name != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func v1ProfilesPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {

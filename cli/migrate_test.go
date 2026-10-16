@@ -227,3 +227,22 @@ func TestExecCommandSuggestsMigrate(t *testing.T) {
 		t.Fatalf("profile in v1 file: err = %v, want hint to run aurl migrate", err)
 	}
 }
+
+func TestSelectProfileNoProfilesHint(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	if _, err := selectProfile(nil, "x"); err == nil || !strings.Contains(err.Error(), "aurl add") {
+		t.Fatalf("no v1 file: err = %v, want hint to run aurl add", err)
+	}
+
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	if err := os.MkdirAll(filepath.Join(home, ".aurl"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".aurl", "profiles"), []byte("[default]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := selectProfile(nil, "x"); err == nil || !strings.Contains(err.Error(), "aurl migrate") {
+		t.Fatalf("v1 file present: err = %v, want hint to run aurl migrate", err)
+	}
+}

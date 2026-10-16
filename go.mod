@@ -8,6 +8,7 @@ require (
 	github.com/byteness/keyring v1.13.2
 	github.com/rakyll/goini v0.0.0-20140112234134-907cca0f578a
 	github.com/toqueteos/webbrowser v1.2.1
+	golang.org/x/term v0.46.0
 	gopkg.in/ini.v1 v1.67.0
 )
 
@@ -38,6 +39,5 @@ require (
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/term v0.46.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -20,19 +21,27 @@ func ConfigureAddCommand(app *kingpin.Application, a *Aurl) {
 
 	cmd := app.Command("add", "Add credentials to the secure keystore.")
 
-	cmd.Arg("profile", "Name of the profile to add.").
-		Required().
+	cmd.Arg("profile", "Name of the profile to add (prompted when omitted).").
 		StringVar(&input.ProfileName)
 
 	cmd.Flag("force", "Force adding even if the profile already exists in the config file.").
 		BoolVar(&input.force)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		keyring, err := a.Keyring()
+		if input.ProfileName == "" {
+			var err error
+			if input.ProfileName, err = util.TerminalPrompt("Enter Profile Name: "); err != nil {
+				return err
+			}
+			if input.ProfileName == "" {
+				return errors.New("profile name is required")
+			}
+		}
+		aurlConfigFile, err := a.AurlConfigFile()
 		if err != nil {
 			return err
 		}
-		aurlConfigFile, err := a.AurlConfigFile()
+		keyring, err := a.Keyring()
 		if err != nil {
 			return err
 		}
@@ -47,11 +56,10 @@ func AddCommand(input AddCommandInput, keyring keyring.Keyring, aurlConfigFile *
 		return fmt.Errorf("Profile %q already exists in config at %s (use --force to override)", input.ProfileName, aurlConfigFile.Path)
 	}
 
-	var grantType, authzServerAuthEndpoint, authzServerTokenEndpoint, redirectURI, clientId, clientSecret, username, password, scope, contentType, userAgent string
+	var grantType, authzServerAuthEndpoint, authzServerTokenEndpoint, redirectURI, clientId, clientSecret, username, password, scope, contentType, userAgent, baseURL string
 	var err error
 
-	// Get grant type first to determine which fields are needed
-	if grantType, err = util.TerminalPromptWithDefault("Enter Grant Type (authorization_code/implicit/password/client_credentials, default: authorization_code): ", "authorization_code"); err != nil {
+	if grantType, err = selectFromList("Select Grant Type:", []string{"authorization_code", "implicit", "password", "client_credentials"}); err != nil {
 		return err
 	}
 
@@ -123,6 +131,9 @@ func AddCommand(input AddCommandInput, keyring keyring.Keyring, aurlConfigFile *
 	if userAgent, err = util.TerminalPromptWithDefault("Enter User Agent (default: aurl): ", "aurl"); err != nil {
 		return err
 	}
+	if baseURL, err = util.TerminalPrompt("Enter Base URL (optional, e.g. https://api.example.com): "); err != nil {
+		return err
+	}
 
 	creds := vault.Credentials{
 		ClientId:     clientId,
@@ -139,6 +150,7 @@ func AddCommand(input AddCommandInput, keyring keyring.Keyring, aurlConfigFile *
 		Scope:                   scope,
 		ContentType:             contentType,
 		UserAgent:               userAgent,
+		BaseURL:                 baseURL,
 	}
 	if err := saveProfile(keyring, aurlConfigFile, newProfileSection, creds); err != nil {
 		return err

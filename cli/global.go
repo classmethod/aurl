@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"slices"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/byteness/keyring"
@@ -17,6 +18,16 @@ type Aurl struct {
 	KeyringConfig  keyring.Config
 	keyringImpl    keyring.Keyring
 	KeyringBackend string
+}
+
+// OS-native keyrings and 1Password only; the rest (file, pass, kwallet, ...) are unconfigured in aurl
+var supportedBackends = []keyring.BackendType{
+	keyring.KeychainBackend,
+	keyring.WinCredBackend,
+	keyring.SecretServiceBackend,
+	keyring.OPDesktopBackend,
+	keyring.OPBackend,
+	keyring.OPConnectBackend,
 }
 
 var keyringConfigDefaults = keyring.Config{
@@ -75,7 +86,9 @@ func ConfigureGlobals(app *kingpin.Application) *Aurl {
 
 	backendsAvailable := []string{}
 	for _, backendType := range keyring.AvailableBackends() {
-		backendsAvailable = append(backendsAvailable, string(backendType))
+		if slices.Contains(supportedBackends, backendType) {
+			backendsAvailable = append(backendsAvailable, string(backendType))
+		}
 	}
 
 	app.Flag("verbose", "Enable verbose logging to stderr.").
@@ -84,6 +97,7 @@ func ConfigureGlobals(app *kingpin.Application) *Aurl {
 
 	app.Flag("backend", fmt.Sprintf("Secret backend to use %v", backendsAvailable)).
 		Default(backendsAvailable[0]).
+		Envar("AURL_BACKEND").
 		EnumVar(&a.KeyringBackend, backendsAvailable...)
 
 	app.Flag("op-timeout", "Timeout for 1Password API operations (op / op-desktop only)").
@@ -104,6 +118,7 @@ func ConfigureGlobals(app *kingpin.Application) *Aurl {
 		StringVar(&a.KeyringConfig.OPConnectHost)
 
 	app.PreAction(func(c *kingpin.ParseContext) error {
+		keyring.Debug = a.Verbose
 		if a.Verbose {
 			log.SetOutput(log.Writer())
 			log.SetPrefix("**** ")

@@ -27,6 +27,7 @@ type Config struct {
 	Scope                 string
 	ContentType           string
 	UserAgent             string
+	BaseURL               string
 }
 
 type ConfigFile struct {
@@ -119,6 +120,7 @@ type ProfileSection struct {
 	Scope                   string `ini:"scopes"`
 	ContentType             string `ini:"content_type"`
 	UserAgent               string `ini:"user_agent"`
+	BaseURL                 string `ini:"base_url"`
 }
 
 func (s ProfileSection) IsEmpty() bool {
@@ -233,6 +235,7 @@ func (cl *ConfigLoader) GetProfileConfig(profileName string) (*Config, error) {
 		Scope:                 profileSection.Scope,
 		ContentType:           contentType,
 		UserAgent:             userAgent,
+		BaseURL:               profileSection.BaseURL,
 	}
 
 	return &config, nil
