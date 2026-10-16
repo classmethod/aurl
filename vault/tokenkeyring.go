@@ -90,9 +90,15 @@ func (tkr *TokenKeyring) Set(profileName string, tokenInfo *TokenInfo) error {
 
 func (tkr *TokenKeyring) Remove(profileName string) error {
 	keyName, err := tkr.lookupKeyName(profileName + TokenKeyringSuffix)
-	if err != nil && err != ErrNotFound {
+	if err == ErrNotFound {
+		return nil
+	}
+	if err != nil {
 		return err
 	}
 
-	return tkr.Keyring.Remove(keyName)
+	if err := tkr.Keyring.Remove(keyName); err != ErrNotFound {
+		return err
+	}
+	return nil
 }
