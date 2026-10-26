@@ -1,6 +1,6 @@
 module github.com/classmethod/aurl
 
-go 1.19
+go 1.26.10
 
 require (
 	github.com/mitchellh/go-homedir v1.1.0
