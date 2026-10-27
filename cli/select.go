@@ -95,10 +95,7 @@ func selectFromList(title string, items []string) (string, error) {
 // applyInput feeds one read to handleKey, splitting non-escape input byte by byte so pasted or fast-typed text is not dropped.
 func applyInput(cur int, items, visible []string, filter string, input []byte) (int, []string, string, bool, bool) {
 	for len(input) > 0 {
-		key := input
-		if key[0] != 0x1b {
-			key = key[:1]
-		}
+		key := input[:keyLen(input)]
 		input = input[len(key):]
 		idx, newFilter, done, cancel := handleKey(cur, len(visible), filter, key)
 		if done || cancel {
@@ -111,6 +108,25 @@ func applyInput(cur int, items, visible []string, filter string, input []byte) (
 		}
 	}
 	return cur, visible, filter, false, false
+}
+
+// keyLen returns the length of the first key in b: a CSI (ESC [ ... final) or SS3 (ESC O x) sequence, or one byte.
+func keyLen(b []byte) int {
+	if len(b) < 3 || b[0] != 0x1b {
+		return 1
+	}
+	switch b[1] {
+	case 'O':
+		return 3
+	case '[':
+		for i := 2; i < len(b); i++ {
+			if b[i] >= 0x40 && b[i] <= 0x7e {
+				return i + 1
+			}
+		}
+		return len(b)
+	}
+	return 1
 }
 
 func scrollOffset(cur, offset, n, rows int) int {

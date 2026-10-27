@@ -89,6 +89,11 @@ func TestApplyInput(t *testing.T) {
 		{0, "", "d\x03ev", 0, "d", []string{"default", "dev", "prod-dev"}, false, true},
 		{0, "", "\x1b[B", 1, "", items, false, false},
 		{0, "", "\x0e\x0e", 2, "", items, false, false},
+		{0, "", "\x1b[B\x1b[B", 2, "", items, false, false},
+		{0, "", "\x1bOB\x1b[B\x1bOA", 1, "", items, false, false},
+		{0, "", "\x1b[Bd", 0, "d", []string{"default", "dev", "prod-dev"}, false, false},
+		{0, "", "\x1b[1;5Bs", 0, "s", []string{"staging"}, false, false},
+		{0, "", "\x1b[B\r", 1, "", items, true, false},
 	}
 	for _, tt := range tests {
 		visible := filterItems(items, tt.filter)
