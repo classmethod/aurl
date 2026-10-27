@@ -54,6 +54,10 @@ func readTerminal(message string, secret bool) (string, error) {
 		io.Reader
 		io.Writer
 	}{os.Stdin, os.Stderr}, message)
+	// x/term assumes 80 columns and hard-wraps there unless told the real size.
+	if w, h, err := term.GetSize(int(os.Stderr.Fd())); err == nil {
+		t.SetSize(w, h)
+	}
 	var line string
 	if secret {
 		line, err = readMasked(message)
