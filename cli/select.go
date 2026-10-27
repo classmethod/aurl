@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/classmethod/aurl/util"
 	"golang.org/x/term"
@@ -34,17 +35,29 @@ func selectFromList(title string, items []string) (string, error) {
 	defer fmt.Fprint(os.Stderr, "\x1b[?25h")
 
 	cur := 0
+	filter := ""
+	visible := items
+	drawn := 0
 	draw := func() {
-		for i, item := range items {
+		if drawn > 0 {
+			fmt.Fprintf(os.Stderr, "\x1b[%dA", drawn)
+		}
+		// Raw mode disables output post-processing, so \n alone does not return the carriage.
+		fmt.Fprintf(os.Stderr, "\x1b[2K%s %s\r\n", title, filter)
+		for i, item := range visible {
 			prefix := "  "
 			if i == cur {
 				prefix = "> "
 			}
-			// Raw mode disables output post-processing, so \n alone does not return the carriage.
 			fmt.Fprintf(os.Stderr, "\x1b[2K%s%s\r\n", prefix, item)
 		}
+		drawn = 1 + len(visible)
+		if len(visible) == 0 {
+			fmt.Fprint(os.Stderr, "\x1b[2K  (no matches)\r\n")
+			drawn++
+		}
+		fmt.Fprint(os.Stderr, "\x1b[J")
 	}
-	fmt.Fprintf(os.Stderr, "%s\r\n", title)
 	draw()
 
 	buf := make([]byte, 8)
@@ -53,32 +66,78 @@ func selectFromList(title string, items []string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		idx, done, cancel := nextIndex(cur, len(items), buf[:n])
+		idx, newVisible, newFilter, done, cancel := applyInput(cur, items, visible, filter, buf[:n])
 		if cancel {
 			return "", errors.New("cancelled")
 		}
 		if done {
-			return items[cur], nil
+			return newVisible[idx], nil
 		}
-		if idx != cur {
-			cur = idx
-			fmt.Fprintf(os.Stderr, "\x1b[%dA", len(items))
+		if idx != cur || newFilter != filter {
+			cur, visible, filter = idx, newVisible, newFilter
 			draw()
 		}
 	}
 }
 
-func nextIndex(cur, n int, key []byte) (idx int, done bool, cancel bool) {
-	switch string(key) {
-	case "\x1b[A", "\x1bOA", "k":
-		return (cur - 1 + n) % n, false, false
-	case "\x1b[B", "\x1bOB", "j":
-		return (cur + 1) % n, false, false
-	case "\r", "\n":
-		return cur, true, false
-	// A lone Esc is not a cancel key: slow links can split "\x1b[A" across reads
-	case "q", "\x03", "\x04":
-		return cur, false, true
+// applyInput feeds one read to handleKey, splitting non-escape input byte by byte so pasted or fast-typed text is not dropped.
+func applyInput(cur int, items, visible []string, filter string, input []byte) (int, []string, string, bool, bool) {
+	for len(input) > 0 {
+		key := input
+		if key[0] != 0x1b {
+			key = key[:1]
+		}
+		input = input[len(key):]
+		idx, newFilter, done, cancel := handleKey(cur, len(visible), filter, key)
+		if done || cancel {
+			return cur, visible, filter, done, cancel
+		}
+		cur = idx
+		if newFilter != filter {
+			filter = newFilter
+			visible = filterItems(items, filter)
+		}
 	}
-	return cur, false, false
+	return cur, visible, filter, false, false
+}
+
+func filterItems(items []string, filter string) []string {
+	f := strings.ToLower(filter)
+	var out []string
+	for _, item := range items {
+		if strings.Contains(strings.ToLower(item), f) {
+			out = append(out, item)
+		}
+	}
+	return out
+}
+
+func handleKey(cur, n int, filter string, key []byte) (idx int, newFilter string, done, cancel bool) {
+	switch string(key) {
+	case "\x1b[A", "\x1bOA", "\x10":
+		if n == 0 {
+			return 0, filter, false, false
+		}
+		return (cur - 1 + n) % n, filter, false, false
+	case "\x1b[B", "\x1bOB", "\x0e":
+		if n == 0 {
+			return 0, filter, false, false
+		}
+		return (cur + 1) % n, filter, false, false
+	case "\r", "\n":
+		return cur, filter, n > 0, false
+	// A lone Esc is not a cancel key: slow links can split "\x1b[A" across reads
+	case "\x03", "\x04":
+		return cur, filter, false, true
+	case "\x7f", "\x08":
+		r := []rune(filter)
+		if len(r) == 0 {
+			return cur, filter, false, false
+		}
+		return 0, string(r[:len(r)-1]), false, false
+	}
+	if len(key) == 1 && key[0] >= 0x20 && key[0] <= 0x7e {
+		return 0, filter + string(key), false, false
+	}
+	return cur, filter, false, false
 }
