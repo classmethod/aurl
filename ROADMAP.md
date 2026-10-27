@@ -8,7 +8,7 @@ Release strategy and branch policy for aurl (as of 2026-10).
 |---|---|---|---|
 | brew `aurl` | 1.1.6 | v1 | `v1-maintenance` |
 | brew `aurl-v2-alpha` | 2.0.0-alpha20251208b | v1 CLI + tokens stored in the OS keychain (PR #20) | `v2-alpha-maintenance` |
-| (unreleased) | - | v2 rewrite (`aurl add` / `aurl exec`, config at `~/.aurl/config`, secrets in the keyring) | `master` |
+| (unreleased) | - | v2 rewrite (`aurl add` / `aurl <profile> <url>`, config at `~/.aurl/config`, secrets in the keyring) | `master` |
 
 ## Branches
 
@@ -27,7 +27,7 @@ Release strategy and branch policy for aurl (as of 2026-10).
 ## v2 release plan
 
 - Release v2 on brew as `aurl`, replacing v1.
-  - `brew upgrade` switches users to v2, and the command changes to `aurl add` / `aurl exec` (v1-style `aurl [-p profile] <url>` stops working).
+  - `brew upgrade` switches users to v2, and the command changes to `aurl add` / `aurl <profile> <url>` (v1-style `aurl [-p profile] <url>` stops working).
   - Homebrew does not distinguish major versions, so users may be upgraded to v2 unintentionally. This is mitigated by the following.
 - Provide a v1 → v2 migration path with `aurl migrate`.
 - For users who want to keep using v1, release brew `aurl-v1` from `v1-maintenance`.
@@ -36,7 +36,7 @@ Release strategy and branch policy for aurl (as of 2026-10).
 
 | Item | v1 | v2 |
 |---|---|---|
-| Command | `aurl [-p profile] <url>` (defaults to `default`) | `aurl exec <profile> <url>` (profile required) |
+| Command | `aurl [-p profile] <url>` (defaults to `default`) | `aurl <profile> <url>` (profile required) |
 | Config file | `~/.aurl/profiles` | `~/.aurl/config` |
 | client_id / client_secret / username / password | Plain text in the config file | Keyring (`aurl add`) |
 | Key names | `default_content_type` / `default_user_agent` | `content_type` / `user_agent` |
@@ -54,8 +54,8 @@ Release strategy and branch policy for aurl (as of 2026-10).
      - Releases run on a macOS runner and build darwin with `CGO_ENABLED=1` (linux/windows stay `CGO_ENABLED=0`).
 2. Migration support
    - [x] `aurl migrate`: read `~/.aurl/profiles`, write settings to `~/.aurl/config` and secrets to the keyring. Apply v1 defaults and handle renamed keys. Leave the v1 file untouched.
-   - [x] When invoked in v1 style (`-p` or `aurl <url>`), point users to `aurl exec` / `aurl migrate`.
-   - [x] When `exec` cannot find the profile and it exists in `~/.aurl/profiles`, suggest `aurl migrate`.
+   - [x] When invoked in v1 style (`-p` or `aurl <url>`), point users to `aurl <profile> <url>` / `aurl migrate`.
+   - [x] When `aurl <profile> <url>` cannot find the profile and it exists in `~/.aurl/profiles`, suggest `aurl migrate`.
    - [ ] Use brew caveats to announce the breaking changes, `aurl migrate`, and `aurl-v1`.
    - [ ] Rewrite the README for v2 and add a migration guide.
 3. Other

@@ -44,6 +44,13 @@ var keyringConfigDefaults = keyring.Config{
 	OPTokenFunc:              util.TerminalSecretPrompt,
 }
 
+// Current and planned subcommand names; a profile with one of them could not be reached as `aurl <profile>`
+var reservedNames = []string{"add", "migrate", "help", "curl", "exec", "run", "list", "remove", "clear", "login", "export", "rotate", "proxy", "token"}
+
+func isReserved(name string) bool {
+	return slices.Contains(reservedNames, name)
+}
+
 func (a *Aurl) Keyring() (keyring.Keyring, error) {
 	if a.keyringImpl == nil {
 		if a.KeyringBackend != "" {

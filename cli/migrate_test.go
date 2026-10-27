@@ -86,10 +86,12 @@ func TestIsV1Style(t *testing.T) {
 	}{
 		{[]string{"-p", "foo", "https://x"}, true},
 		{[]string{"-pfoo", "https://x"}, true},
-		{[]string{"https://x"}, true},
 		{[]string{"--profile=foo", "https://x"}, true},
 		{[]string{"--profile", "foo", "http://x"}, true},
-		{[]string{"exec", "foo", "https://x"}, false},
+		{[]string{"https://x"}, false},
+		{[]string{"dev", "https://x"}, false},
+		{[]string{"dev", "--print-body", "https://x"}, false},
+		{[]string{"curl", "foo", "https://x"}, false},
 		{[]string{"add", "foo"}, false},
 		{[]string{"migrate"}, false},
 		{nil, false},
@@ -105,7 +107,7 @@ func TestMigrateCommand(t *testing.T) {
 	dir := t.TempDir()
 	profiles := filepath.Join(dir, "profiles")
 	v1 := "[default]\nclient_id = id1\nclient_secret = s1\nauth_server_token_endpoint = https://auth/token\ngrant_type = client_credentials\ndefault_content_type = text/plain\n\n" +
-		"[dev]\ngrant_type = password\nusername = u\npassword = pw\n\n[empty]\n"
+		"[dev]\ngrant_type = password\nusername = u\npassword = pw\n\n[empty]\n\n[curl]\nclient_id = c\n"
 	if err := os.WriteFile(profiles, []byte(v1), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -152,6 +154,9 @@ func TestMigrateCommand(t *testing.T) {
 	}
 	if _, err := ckr.Get("dev"); err == nil {
 		t.Error("credentials for skipped dev profile were stored")
+	}
+	if _, err := ckr.Get("curl"); err == nil {
+		t.Error("credentials for reserved curl profile were stored")
 	}
 
 	if err := MigrateCommand(MigrateCommandInput{ProfilesFile: profiles, Force: true}, kr, reloaded); err != nil {

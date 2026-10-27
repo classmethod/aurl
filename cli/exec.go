@@ -34,7 +34,7 @@ type ExecCommandInput struct {
 func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 	input := ExecCommandInput{}
 
-	cmd := app.Command("exec", "Execute a command with Token. Prompts for profile and url when omitted.")
+	cmd := app.Command("curl", "Send an HTTP request with the profile's token (default command: aurl <profile> <url>). Prompts for profile and url when omitted.").Default()
 
 	cmd.Arg("profile", "Name of the profile to use.").
 		HintAction(a.MustGetProfileNames).
@@ -76,12 +76,15 @@ func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 				return err
 			}
 		}
-		if input.TargetUrl == "" {
-			// Catches `aurl exec <url>` (url parsed as profile) before asking for a URL
-			section, ok := aurlConfigFile.ProfileSection(input.ProfileName)
-			if !ok {
-				return fmt.Errorf("Profile '%s' not found in config file", input.ProfileName)
+		section, ok := aurlConfigFile.ProfileSection(input.ProfileName)
+		if !ok {
+			showUsage, err := profileNotFound(input.ProfileName, aurlConfigFile.Path)
+			if showUsage {
+				app.Usage(nil)
 			}
+			return err
+		}
+		if input.TargetUrl == "" {
 			if input.TargetUrl, err = util.TerminalPrompt(urlPromptMessage(section.BaseURL)); err != nil {
 				return err
 			}
@@ -96,7 +99,7 @@ func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 			return err
 		}
 
-		kingpin.FatalIfError(ExecCommand(input, keyring, aurlConfigFile), "exec")
+		kingpin.FatalIfError(ExecCommand(input, keyring, aurlConfigFile), "curl")
 		return nil
 	})
 }
@@ -109,6 +112,18 @@ func selectProfile(names []string, configPath string) (string, error) {
 		return "", fmt.Errorf("Config file %s has no profiles. Run `aurl add` to create one.", configPath)
 	}
 	return selectFromList("Select profile:", names)
+}
+
+// profileNotFound explains why name is not a profile; showUsage is set when name is likely a mistyped command.
+func profileNotFound(name, configPath string) (showUsage bool, err error) {
+	lower := strings.ToLower(name)
+	switch {
+	case strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://"):
+		return false, fmt.Errorf("%q is a URL, not a profile (%w)", name, ErrV1Style)
+	case inV1Profiles(name):
+		return false, fmt.Errorf("Profile %q not found in %s, but it was found in ~/.aurl/profiles (aurl v1). Run `aurl migrate` to import it.", name, configPath)
+	}
+	return true, fmt.Errorf("unknown profile or command %q", name)
 }
 
 func urlPromptMessage(baseURL string) string {

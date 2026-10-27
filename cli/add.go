@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/byteness/keyring"
@@ -21,14 +22,11 @@ func ConfigureAddCommand(app *kingpin.Application, a *Aurl) {
 
 	cmd := app.Command("add", "Add credentials to the secure keystore.")
 
-	cmd.Arg("profile", "Name of the profile to add (prompted when omitted).").
-		StringVar(&input.ProfileName)
-
 	cmd.Flag("force", "Force adding even if the profile already exists in the config file.").
 		BoolVar(&input.force)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		if input.ProfileName == "" {
+		for {
 			var err error
 			if input.ProfileName, err = util.TerminalPrompt("Enter Profile Name: "); err != nil {
 				return err
@@ -36,6 +34,10 @@ func ConfigureAddCommand(app *kingpin.Application, a *Aurl) {
 			if input.ProfileName == "" {
 				return errors.New("profile name is required")
 			}
+			if !isReserved(input.ProfileName) {
+				break
+			}
+			fmt.Fprintf(os.Stderr, "%q is reserved for a subcommand, choose another name\n", input.ProfileName)
 		}
 		aurlConfigFile, err := a.AurlConfigFile()
 		if err != nil {

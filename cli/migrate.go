@@ -73,6 +73,10 @@ func MigrateCommand(input MigrateCommandInput, keyring keyring.Keyring, aurlConf
 	sort.Strings(names)
 
 	for _, name := range names {
+		if isReserved(name) {
+			fmt.Fprintf(os.Stderr, "Warning: profile %q: skipped (reserved name; rename it in %s and re-run)\n", name, path)
+			continue
+		}
 		if _, exists := aurlConfigFile.ProfileSection(name); exists && !input.Force {
 			fmt.Printf("%s: skipped (already exists, use --force)\n", name)
 			continue
@@ -167,18 +171,21 @@ func v1ProfilesPath() (string, error) {
 	return filepath.Join(home, ".aurl", "profiles"), nil
 }
 
-// IsV1Style reports whether args look like an aurl v1 invocation (aurl [-p profile] <url>).
+const V1StyleNotice = `aurl v2 changed the command line syntax.
+  v1: aurl [-p profile] <url>
+  v2: aurl <profile> <url>
+To migrate ~/.aurl/profiles to v2, run: aurl migrate
+`
+
+// ErrV1Style marks command errors caused by aurl v1 syntax; callers print V1StyleNotice for it.
+var ErrV1Style = errors.New("aurl v1 syntax")
+
+// IsV1Style reports whether args use the v1-only -p/--profile flag; `aurl <url>` is caught by profileNotFound instead.
 func IsV1Style(args []string) bool {
-	hasSubcommand, hasURL := false, false
 	for _, arg := range args {
-		switch {
-		case strings.HasPrefix(arg, "-p") || arg == "--profile" || strings.HasPrefix(arg, "--profile="):
+		if strings.HasPrefix(arg, "-p") || arg == "--profile" || strings.HasPrefix(arg, "--profile=") {
 			return true
-		case arg == "exec" || arg == "add" || arg == "migrate" || arg == "help":
-			hasSubcommand = true
-		case strings.HasPrefix(arg, "http://") || strings.HasPrefix(arg, "https://"):
-			hasURL = true
 		}
 	}
-	return !hasSubcommand && hasURL
+	return false
 }

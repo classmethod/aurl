@@ -1,8 +1,14 @@
 package cli
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/alecthomas/kingpin/v2"
 )
 
 func TestParseProfileChoice(t *testing.T) {
@@ -127,6 +133,47 @@ func TestResolveURL(t *testing.T) {
 		got, err := resolveURL(tt.base, tt.target)
 		if (err != nil) != tt.wantErr || got != tt.want {
 			t.Errorf("resolveURL(%q, %q) = %q, %v; want %q, wantErr %v", tt.base, tt.target, got, err, tt.want, tt.wantErr)
+		}
+	}
+}
+
+func TestProfileNotFound(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	if err := os.MkdirAll(filepath.Join(home, ".aurl"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".aurl", "profiles"), []byte("[v1only]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name      string
+		wantUsage bool
+		wantV1    bool
+		wantMsg   string
+	}{
+		{"https://example.com/a", false, true, ""},
+		{"HTTP://example.com", false, true, ""},
+		{"v1only", false, false, "aurl migrate"},
+		{"typo", true, false, `unknown profile or command "typo"`},
+	}
+	for _, tt := range tests {
+		usage, err := profileNotFound(tt.name, "config")
+		if usage != tt.wantUsage || errors.Is(err, ErrV1Style) != tt.wantV1 || err == nil || !strings.Contains(err.Error(), tt.wantMsg) {
+			t.Errorf("profileNotFound(%q) = %v, %v; want usage %v, v1 %v, message containing %q", tt.name, usage, err, tt.wantUsage, tt.wantV1, tt.wantMsg)
+		}
+	}
+}
+
+func TestCommandNamesAreReserved(t *testing.T) {
+	app := kingpin.New("aurl", "")
+	a := ConfigureGlobals(app)
+	ConfigureAddCommand(app, a)
+	ConfigureExecCommand(app, a)
+	ConfigureMigrateCommand(app, a)
+	for _, cmd := range app.Model().Commands {
+		if !isReserved(cmd.Name) {
+			t.Errorf("command %q is missing from reservedNames", cmd.Name)
 		}
 	}
 }

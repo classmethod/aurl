@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -15,7 +16,7 @@ var (
 )
 
 func main() {
-	app := kingpin.New(name, fmt.Sprintf("Command line utility to call HTTP request with OAuth2.0. (version %s)", version))
+	app := kingpin.New(name, fmt.Sprintf("Command line utility to call HTTP request with OAuth2.0. (version %s)\nUsage: aurl <profile> <url>. Run `aurl help curl` for request flags (-X, -H, -d, ...).", version))
 	app.Version(version)
 	app.Author(maintainer)
 
@@ -25,16 +26,10 @@ func main() {
 	cli.ConfigureMigrateCommand(app, a)
 
 	command, err := app.Parse(os.Args[1:])
-	if err != nil && cli.IsV1Style(os.Args[1:]) {
+	if err != nil && (cli.IsV1Style(os.Args[1:]) || errors.Is(err, cli.ErrV1Style)) {
 		app.Errorf("%s", err)
-		fmt.Fprint(os.Stderr, v1StyleNotice)
+		fmt.Fprint(os.Stderr, cli.V1StyleNotice)
 		os.Exit(1)
 	}
 	kingpin.MustParse(command, err)
 }
-
-const v1StyleNotice = `aurl v2 changed the command line syntax.
-  v1: aurl [-p profile] <url>
-  v2: aurl exec <profile> <url>
-To migrate ~/.aurl/profiles to v2, run: aurl migrate
-`
