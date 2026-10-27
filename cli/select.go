@@ -38,20 +38,32 @@ func selectFromList(title string, items []string) (string, error) {
 	filter := ""
 	visible := items
 	drawn := 0
+	offset := 0
 	draw := func() {
 		if drawn > 0 {
 			fmt.Fprintf(os.Stderr, "\x1b[%dA", drawn)
 		}
+		rows, width := len(visible), 0
+		if w, h, err := term.GetSize(int(os.Stderr.Fd())); err == nil {
+			// Cursor-up stops at the top row and wrapped lines take extra rows, so keep the frame within the screen.
+			rows, width = max(h-2, 1), w-1
+		}
+		offset = scrollOffset(cur, offset, len(visible), rows)
+		end := min(offset+rows, len(visible))
+		header := title + " " + filter
+		if end-offset < len(visible) {
+			header += fmt.Sprintf("  (%d/%d)", cur+1, len(visible))
+		}
 		// Raw mode disables output post-processing, so \n alone does not return the carriage.
-		fmt.Fprintf(os.Stderr, "\x1b[2K%s %s\r\n", title, filter)
-		for i, item := range visible {
+		fmt.Fprintf(os.Stderr, "\x1b[2K%s\r\n", truncateRunes(header, width))
+		for i := offset; i < end; i++ {
 			prefix := "  "
 			if i == cur {
 				prefix = "> "
 			}
-			fmt.Fprintf(os.Stderr, "\x1b[2K%s%s\r\n", prefix, item)
+			fmt.Fprintf(os.Stderr, "\x1b[2K%s\r\n", truncateRunes(prefix+visible[i], width))
 		}
-		drawn = 1 + len(visible)
+		drawn = 1 + end - offset
 		if len(visible) == 0 {
 			fmt.Fprint(os.Stderr, "\x1b[2K  (no matches)\r\n")
 			drawn++
@@ -99,6 +111,28 @@ func applyInput(cur int, items, visible []string, filter string, input []byte) (
 		}
 	}
 	return cur, visible, filter, false, false
+}
+
+func scrollOffset(cur, offset, n, rows int) int {
+	if n <= rows {
+		return 0
+	}
+	if cur < offset {
+		offset = cur
+	}
+	if cur >= offset+rows {
+		offset = cur - rows + 1
+	}
+	return min(offset, n-rows)
+}
+
+// truncateRunes cuts s to at most width runes; width <= 0 means no limit.
+func truncateRunes(s string, width int) string {
+	r := []rune(s)
+	if width <= 0 || len(r) <= width {
+		return s
+	}
+	return string(r[:width])
 }
 
 func filterItems(items []string, filter string) []string {

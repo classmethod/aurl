@@ -116,6 +116,47 @@ func TestFilterItems(t *testing.T) {
 	}
 }
 
+func TestScrollOffset(t *testing.T) {
+	tests := []struct {
+		cur, offset, n, rows int
+		want                 int
+	}{
+		{0, 0, 3, 5, 0},
+		{2, 1, 3, 5, 0},
+		{4, 0, 10, 5, 0},
+		{5, 0, 10, 5, 1},
+		{3, 4, 10, 5, 3},
+		{9, 0, 10, 5, 5},
+		{0, 5, 10, 5, 0},
+		{0, 3, 4, 1, 0},
+		{7, 6, 8, 3, 5},
+	}
+	for _, tt := range tests {
+		if got := scrollOffset(tt.cur, tt.offset, tt.n, tt.rows); got != tt.want {
+			t.Errorf("scrollOffset(%d, %d, %d, %d) = %d; want %d", tt.cur, tt.offset, tt.n, tt.rows, got, tt.want)
+		}
+	}
+}
+
+func TestTruncateRunes(t *testing.T) {
+	tests := []struct {
+		s     string
+		width int
+		want  string
+	}{
+		{"abcdef", 4, "abcd"},
+		{"abc", 4, "abc"},
+		{"abcd", 4, "abcd"},
+		{"あいうえお", 3, "あいう"},
+		{"abc", 0, "abc"},
+	}
+	for _, tt := range tests {
+		if got := truncateRunes(tt.s, tt.width); got != tt.want {
+			t.Errorf("truncateRunes(%q, %d) = %q; want %q", tt.s, tt.width, got, tt.want)
+		}
+	}
+}
+
 func TestResolveURL(t *testing.T) {
 	tests := []struct {
 		base, target, want string
