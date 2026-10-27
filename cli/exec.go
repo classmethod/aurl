@@ -78,10 +78,11 @@ func ConfigureExecCommand(app *kingpin.Application, a *Aurl) {
 		}
 		if input.TargetUrl == "" {
 			// Catches `aurl exec <url>` (url parsed as profile) before asking for a URL
-			if _, ok := aurlConfigFile.ProfileSection(input.ProfileName); !ok {
+			section, ok := aurlConfigFile.ProfileSection(input.ProfileName)
+			if !ok {
 				return fmt.Errorf("Profile '%s' not found in config file", input.ProfileName)
 			}
-			if input.TargetUrl, err = util.TerminalPrompt("Enter URL (or path when base_url is set): "); err != nil {
+			if input.TargetUrl, err = util.TerminalPrompt(urlPromptMessage(section.BaseURL)); err != nil {
 				return err
 			}
 			if input.TargetUrl == "" {
@@ -108,6 +109,13 @@ func selectProfile(names []string, configPath string) (string, error) {
 		return "", fmt.Errorf("Config file %s has no profiles. Run `aurl add` to create one.", configPath)
 	}
 	return selectFromList("Select profile:", names)
+}
+
+func urlPromptMessage(baseURL string) string {
+	if baseURL == "" {
+		return "Enter URL (no base_url set): "
+	}
+	return fmt.Sprintf("Enter URL or path (base_url: %s): ", baseURL)
 }
 
 func parseProfileChoice(names []string, answer string) (string, error) {
