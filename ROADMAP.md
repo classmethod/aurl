@@ -41,6 +41,7 @@ Release strategy and branch policy for aurl (as of 2026-10).
 | client_id / client_secret / username / password | Plain text in the config file | Keyring (`aurl add`) |
 | Key names | `default_content_type` / `default_user_agent` | `content_type` / `user_agent` |
 | Default Content-Type | None | `application/json` |
+| Default User-Agent | `aurl-<version>` | `aurl` |
 | Tokens | `~/.aurl/token/*.json` (keychain in the alpha) | Keyring (re-authentication required) |
 
 ### TODO before the v2 release
@@ -59,7 +60,7 @@ Release strategy and branch policy for aurl (as of 2026-10).
    - [ ] Use brew caveats to announce the breaking changes, `aurl migrate`, and `aurl-v1`.
    - [ ] Rewrite the README for v2 and add a migration guide.
 3. Other
-   - [ ] `vault.ConfigFile.ProfileSections()` drops every section except `default` (affects shell completion).
+   - [x] `vault.ConfigFile.ProfileSections()` drops every section except `default` (affects shell completion).
    - [x] Check whether the alpha (zalando/go-keyring) and v2 (byteness/keyring) read/write the same keyring item (service `aurl`, key = profile name).
      - macOS: same item (generic password, service `aurl`, account = profile name). The alpha stores token JSON there and v2 stores credentials JSON, so `aurl add` / `aurl migrate` overwrite the alpha token (harmless since v2 requires re-authentication, but the item was created by `/usr/bin/security`, so a keychain access prompt may appear).
      - Windows: different items (alpha `aurl:<profile>`, v2 `aurl:aurl:<profile>`).
