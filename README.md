@@ -147,7 +147,7 @@ $ aurl add
 `~/.aurl/config` and the client ID / client secret (and username / password for the password grant) to the keyring.
 Content type and user agent default to `application/json` and `aurl` when left empty.
 
-`aurl add` fails if the profile already exists. Use `aurl add --force` to overwrite it (you re-enter every setting).
+If the profile already exists, `aurl add` asks whether to overwrite it (you re-enter every setting).
 Adding a profile also removes its stored token.
 
 There is no command to remove a profile. Delete its section from `~/.aurl/config` and the keyring entries `<profile>` and

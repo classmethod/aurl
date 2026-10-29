@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/byteness/keyring"
@@ -14,16 +15,12 @@ import (
 
 type AddCommandInput struct {
 	ProfileName string
-	force       bool
 }
 
 func ConfigureAddCommand(app *kingpin.Application, a *Aurl) {
 	input := AddCommandInput{}
 
 	cmd := app.Command("add", "Add credentials to the secure keystore.")
-
-	cmd.Flag("force", "Force adding even if the profile already exists in the config file.").
-		BoolVar(&input.force)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		for {
@@ -43,6 +40,15 @@ func ConfigureAddCommand(app *kingpin.Application, a *Aurl) {
 		if err != nil {
 			return err
 		}
+		if _, hasProfile := aurlConfigFile.ProfileSection(input.ProfileName); hasProfile {
+			answer, err := util.TerminalPrompt(fmt.Sprintf("Profile %q already exists in %s. Overwrite? [y/N]: ", input.ProfileName, aurlConfigFile.Path))
+			if err != nil {
+				return err
+			}
+			if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
+				return errors.New("cancelled")
+			}
+		}
 		keyring, err := a.Keyring()
 		if err != nil {
 			return err
@@ -54,10 +60,6 @@ func ConfigureAddCommand(app *kingpin.Application, a *Aurl) {
 }
 
 func AddCommand(input AddCommandInput, keyring keyring.Keyring, aurlConfigFile *vault.ConfigFile) error {
-	if _, hasProfile := aurlConfigFile.ProfileSection(input.ProfileName); hasProfile && !input.force {
-		return fmt.Errorf("Profile %q already exists in config at %s (use --force to override)", input.ProfileName, aurlConfigFile.Path)
-	}
-
 	var grantType, authzServerAuthEndpoint, authzServerTokenEndpoint, redirectURI, clientId, clientSecret, username, password, scope, contentType, userAgent, baseURL string
 	var err error
 
