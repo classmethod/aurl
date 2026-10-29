@@ -154,12 +154,6 @@ func ExecCommand(input ExecCommandInput, keyring keyring.Keyring, aurlConfigFile
 		return err
 	}
 
-	ckr := &vault.CredentialKeyring{Keyring: keyring}
-	creds, credsErr := ckr.Get(input.ProfileName)
-	if credsErr != nil {
-		return fmt.Errorf("Failed to get credentials: %w", credsErr)
-	}
-
 	var tokenInfo *vault.TokenInfo
 	// Load previous token from keyring unless RenewToken is specified
 	if !input.RenewToken {
@@ -173,7 +167,6 @@ func ExecCommand(input ExecCommandInput, keyring keyring.Keyring, aurlConfigFile
 		Name: input.ProfileName,
 
 		Config:       config,
-		Credentials:  creds,
 		TokenInfo:    tokenInfo,
 		Method:       &input.Method,
 		Headers:      &input.Headers,

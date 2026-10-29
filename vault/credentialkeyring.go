@@ -34,14 +34,15 @@ func (ck *CredentialKeyring) Set(credentialsName string, creds Credentials) erro
 	if err != nil {
 		return err
 	}
+	// macOS Keychain keeps the old ACL on update, so recreate the item to grant aurl access.
+	if err := ck.Keyring.Remove(credentialsName); err != nil && err != keyring.ErrKeyNotFound {
+		return err
+	}
 
 	return ck.Keyring.Set(keyring.Item{
 		Key:   credentialsName,
 		Label: fmt.Sprintf("aurl (%s)", credentialsName),
 		Data:  bytes,
-
-		// specific Keychain settings
-		KeychainNotTrustApplication: true,
 	})
 }
 

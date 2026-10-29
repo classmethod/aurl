@@ -18,11 +18,10 @@ func newRequest(target string, insecure, printBody, printHeaders bool) *Request 
 	method, data := "GET", ""
 	headers := []string{}
 	return &Request{
-		Name:        "test",
-		Config:      &vault.Config{GrantType: "client_credentials", UserAgent: "aurl-test", ContentType: "application/json"},
-		Credentials: &vault.Credentials{ClientId: "id", ClientSecret: "secret"},
-		TokenInfo:   &vault.TokenInfo{Tokens: &vault.Tokens{AccessToken: "dummy"}},
-		Method:      &method, Headers: &headers, Data: &data, TargetUrl: &target,
+		Name:      "test",
+		Config:    &vault.Config{GrantType: "client_credentials", UserAgent: "aurl-test", ContentType: "application/json"},
+		TokenInfo: &vault.TokenInfo{Tokens: &vault.Tokens{AccessToken: "dummy"}},
+		Method:    &method, Headers: &headers, Data: &data, TargetUrl: &target,
 		Insecure: &insecure, PrintBody: &printBody, PrintHeaders: &printHeaders,
 	}
 }
@@ -70,6 +69,21 @@ func TestPrintHeaders(t *testing.T) {
 	})
 	if strings.Contains(out, "body") {
 		t.Errorf("--no-print-body should suppress body, got %q", out)
+	}
+}
+
+func TestValidTokenSkipsCredentials(t *testing.T) {
+	var gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		gotAuth = req.Header.Get("Authorization")
+	}))
+	defer srv.Close()
+
+	if err := newRequest(srv.URL, false, false, false).Execute(keyring.NewArrayKeyring(nil)); err != nil {
+		t.Fatalf("Execute without credentials in keyring: %v", err)
+	}
+	if gotAuth != "Bearer dummy" {
+		t.Errorf("Authorization = %q", gotAuth)
 	}
 }
 

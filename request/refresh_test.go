@@ -65,9 +65,8 @@ func TestExecuteRefresh(t *testing.T) {
 			headers := []string{}
 			expiresIn := int64(3600)
 			r := &Request{
-				Name:        "test",
-				Config:      &vault.Config{GrantType: "client_credentials", TokenEndpoint: srv.URL + "/token", UserAgent: "aurl-test", ContentType: "application/json"},
-				Credentials: &vault.Credentials{ClientId: "id", ClientSecret: "secret"},
+				Name:   "test",
+				Config: &vault.Config{GrantType: "client_credentials", TokenEndpoint: srv.URL + "/token", UserAgent: "aurl-test", ContentType: "application/json"},
 				TokenInfo: &vault.TokenInfo{
 					RequestTimestamp: 0,
 					Tokens:           &vault.Tokens{AccessToken: "expired-access", RefreshToken: "old-refresh", ExpiresIn: &expiresIn},
@@ -76,7 +75,11 @@ func TestExecuteRefresh(t *testing.T) {
 				Insecure: &insecure, PrintBody: &printBody, PrintHeaders: &printHeaders,
 			}
 
-			if err := r.Execute(keyring.NewArrayKeyring(nil)); err != nil {
+			kr := keyring.NewArrayKeyring(nil)
+			if err := (&vault.CredentialKeyring{Keyring: kr}).Set("test", vault.Credentials{ClientId: "id", ClientSecret: "secret"}); err != nil {
+				t.Fatal(err)
+			}
+			if err := r.Execute(kr); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 			if grantCalled != tt.wantGrantCalled {

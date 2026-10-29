@@ -23,7 +23,6 @@ type Request struct {
 	Version string
 
 	Config       *vault.Config
-	Credentials  *vault.Credentials
 	TokenInfo    *vault.TokenInfo
 	Method       *string
 	Headers      *[]string
@@ -38,11 +37,16 @@ type Request struct {
 func (r *Request) Execute(keyring keyring.Keyring) (err error) {
 	log.Printf("Profile = %v", r.Config)
 	if r.TokenInfo == nil || r.TokenInfo.Tokens == nil || r.TokenInfo.Tokens.AccessToken == "" || r.TokenInfo.IsExpired() {
+		// Read lazily: each keyring read can trigger a macOS Keychain prompt.
+		creds, err := (&vault.CredentialKeyring{Keyring: keyring}).Get(r.Name)
+		if err != nil {
+			return fmt.Errorf("Failed to get credentials: %w", err)
+		}
 		var tokenResponse *OAuth2TokenResponse
 
 		if r.TokenInfo != nil && r.TokenInfo.Tokens != nil && r.TokenInfo.Tokens.RefreshToken != "" {
 			log.Printf("Access token is missing or expired, try to refresh using refresh token")
-			if tokenResponse, err = r.refresh(); err != nil {
+			if tokenResponse, err = r.refresh(creds); err != nil {
 				log.Printf("Token refresh failed, falling back to full grant flow: %v", err)
 				tokenResponse = nil
 			} else if tokenResponse.RefreshToken == "" {
@@ -52,7 +56,7 @@ func (r *Request) Execute(keyring keyring.Keyring) (err error) {
 		}
 		if tokenResponse == nil {
 			log.Printf("Access token is missing or expired, perform full grant flow")
-			if tokenResponse, err = r.grant(); err != nil {
+			if tokenResponse, err = r.grant(creds); err != nil {
 				return err
 			}
 		}
@@ -89,22 +93,22 @@ func (r *Request) Execute(keyring keyring.Keyring) (err error) {
 	return nil
 }
 
-func (r *Request) refresh() (*OAuth2TokenResponse, error) {
-	return refreshGrant(r.Config, r.Credentials, r.TokenInfo.Tokens.RefreshToken, *r.Insecure)
+func (r *Request) refresh(creds *vault.Credentials) (*OAuth2TokenResponse, error) {
+	return refreshGrant(r.Config, creds, r.TokenInfo.Tokens.RefreshToken, *r.Insecure)
 }
 
-func (r *Request) grant() (*OAuth2TokenResponse, error) {
+func (r *Request) grant(creds *vault.Credentials) (*OAuth2TokenResponse, error) {
 	switch r.Config.GrantType {
 	case "authorization_code":
-		return authCodeGrant(r.Config, r.Credentials, *r.Insecure)
+		return authCodeGrant(r.Config, creds, *r.Insecure)
 	case "implicit":
 		// TODO: not enough checked yet
-		return implicitGrant(r.Config, r.Credentials, *r.Insecure)
+		return implicitGrant(r.Config, creds, *r.Insecure)
 	case "password":
 		// TODO: not enough checked yet
-		return resourceOwnerPasswordCredentialsGrant(r.Config, r.Credentials, *r.Insecure)
+		return resourceOwnerPasswordCredentialsGrant(r.Config, creds, *r.Insecure)
 	case "client_credentials":
-		return clientCredentialsGrant(r.Config, r.Credentials, *r.Insecure)
+		return clientCredentialsGrant(r.Config, creds, *r.Insecure)
 	default:
 		return nil, errors.New("Unknown grant type: " + r.Config.GrantType)
 	}
