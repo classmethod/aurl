@@ -79,8 +79,17 @@ brews:
     homepage: "https://github.com/classmethod/aurl"
 
     # Description of the project
-    # This will serve v1.x.y now, and v2.0.0+ when stable
     description: "URL Command Line Tool with Authentication Support"
+
+    caveats: |
+      aurl v2 is not compatible with v1: the command is now `aurl <profile> <url>`,
+      and secrets are stored in the keyring instead of ~/.aurl/profiles.
+
+      Migrating from v1 (or aurl-v2-alpha):
+        aurl migrate
+      To keep using v1:
+        brew uninstall aurl && brew install aurl-v1
+      See https://github.com/classmethod/aurl#migrating-from-v1
 
     # Custom install script for brew
     install: |
@@ -90,6 +99,6 @@ brews:
     test: |
       system "#{bin}/aurl --version"
 
-    # Add conflicts_with to prevent installing both stable and alpha
     custom_block: |
+      conflicts_with "aurl-v1", because: "both install 'aurl' binary"
       conflicts_with "aurl-v2-alpha", because: "both install 'aurl' binary"

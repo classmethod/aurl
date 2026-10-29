@@ -6,9 +6,9 @@ Release strategy and branch policy for aurl (as of 2026-10).
 
 | Channel | Version | Contents | Branch |
 |---|---|---|---|
-| brew `aurl` | 1.1.6 | v1 | `v1-maintenance` |
-| brew `aurl-v2-alpha` | 2.0.0-alpha20251208b | v1 CLI + tokens stored in the OS keychain (PR #20) | `v2-alpha-maintenance` |
-| (unreleased) | - | v2 rewrite (`aurl add` / `aurl <profile> <url>`, config at `~/.aurl/config`, secrets in the keyring) | `master` |
+| brew `aurl` | 2.0.0 | v2 rewrite (`aurl add` / `aurl <profile> <url>`, config at `~/.aurl/config`, secrets in the keyring) | `master` |
+| brew `aurl-v1` | 1.1.7 | v1 (maintenance only) | `v1-maintenance` |
+| brew `aurl-v2-alpha` | 2.0.0-alpha20261026 | v1 CLI + tokens stored in the OS keychain (PR #20). Frozen | `v2-alpha-maintenance` |
 
 ## Branches
 
@@ -57,8 +57,8 @@ Release strategy and branch policy for aurl (as of 2026-10).
    - [x] `aurl migrate`: read `~/.aurl/profiles`, write settings to `~/.aurl/config` and secrets to the keyring. Apply v1 defaults and handle renamed keys. Leave the v1 file untouched.
    - [x] When invoked in v1 style (`-p` or `aurl <url>`), point users to `aurl <profile> <url>` / `aurl migrate`.
    - [x] When `aurl <profile> <url>` cannot find the profile and it exists in `~/.aurl/profiles`, suggest `aurl migrate`.
-   - [ ] Use brew caveats to announce the breaking changes, `aurl migrate`, and `aurl-v1`.
-   - [ ] Rewrite the README for v2 and add a migration guide.
+   - [x] Use brew caveats to announce the breaking changes, `aurl migrate`, and `aurl-v1`.
+   - [x] Rewrite the README for v2 and add a migration guide.
 3. Other
    - [x] `vault.ConfigFile.ProfileSections()` drops every section except `default` (affects shell completion).
    - [x] Check whether the alpha (zalando/go-keyring) and v2 (byteness/keyring) read/write the same keyring item (service `aurl`, key = profile name).
@@ -66,13 +66,14 @@ Release strategy and branch policy for aurl (as of 2026-10).
      - Windows: different items (alpha `aurl:<profile>`, v2 `aurl:aurl:<profile>`).
      - Linux: different items (alpha uses the login collection, v2 the `aurl` collection).
 4. Release
-   - [ ] Release an alpha from `master` and let alpha users try the migration → freeze `v2-alpha-maintenance`.
-   - [ ] Change the release config on `v1-maintenance` to publish brew `aurl-v1`. (It currently publishes brew `aurl`; tagging v1 after the v2 release would revert `aurl` to v1.)
-   - [ ] Release `aurl-v1`.
-   - [ ] Release `v2.0.0` (brew `aurl` switches to v2).
+   - [x] Release an alpha from `master` and let alpha users try the migration → freeze `v2-alpha-maintenance`. (Skipped the public alpha; tested with `v2.0.0-rc.*` pre-releases instead.)
+   - [x] Change the release config on `v1-maintenance` to publish brew `aurl-v1`.
+   - [x] Release `aurl-v1` (1.1.7).
+   - [x] Release `v2.0.0` (brew `aurl` switches to v2).
 
 ## Open questions
 
-- Should `aurl-v1` install its binary as `aurl-v1` or `aurl`? (`aurl` keeps existing scripts working but conflicts with brew `aurl`.)
+- `aurl-v1` installs its binary as `aurl` and declares `conflicts_with "aurl"` (decided: keeps existing scripts working).
+
 - Should the module path in go.mod become `/v2`? (Otherwise `go install ...@latest` does not install v2.)
 - What to do with old PRs: #19 (duplicates v2's `aurl add`), #21 (dependabot).
