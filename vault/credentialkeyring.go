@@ -24,7 +24,7 @@ func (ck *CredentialKeyring) Get(credentialsName string) (creds *Credentials, er
 		return creds, err
 	}
 	if err = json.Unmarshal(item.Data, &creds); err != nil {
-		return creds, fmt.Errorf("Invalid data in keyring: %v", err)
+		return creds, fmt.Errorf("keyring entry for %q is not aurl v2 credentials (left by aurl v2-alpha?): %v. Run `aurl add` to register them", credentialsName, err)
 	}
 	return creds, err
 }
@@ -34,11 +34,6 @@ func (ck *CredentialKeyring) Set(credentialsName string, creds Credentials) erro
 	if err != nil {
 		return err
 	}
-	// macOS Keychain keeps the old ACL on update, so recreate the item to grant aurl access.
-	if err := ck.Keyring.Remove(credentialsName); err != nil && err != keyring.ErrKeyNotFound {
-		return err
-	}
-
 	return ck.Keyring.Set(keyring.Item{
 		Key:   credentialsName,
 		Label: fmt.Sprintf("aurl (%s)", credentialsName),
