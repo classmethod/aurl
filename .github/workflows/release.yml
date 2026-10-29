@@ -11,22 +11,24 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/checkout@v4
         with:
-          go-version: 1.19
+          fetch-depth: 0
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - name: Get dependencies
         run: make deps
       - name: Build
         run: make
       - name: Test
-        run: go test
+        run: go test ./...
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
-          args: release --rm-dist
+          version: "~> v2"
+          args: release --clean
         env:
           # set github personal access token in order to generate brew formula to external repository
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
